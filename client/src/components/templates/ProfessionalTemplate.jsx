@@ -153,8 +153,14 @@ export const ProfessionalTemplate = ({ data, theme = 'dark' }) => {
                         <Calendar size={14} /> {exp.start_date} – {exp.is_current ? 'Present' : exp.end_date}
                       </span>
                     </div>
-                    <div style={{ fontSize: '1rem', color: 'var(--tp-accent)', fontWeight: 500, marginBottom: '0.75rem' }}>
-                      {exp.company}
+                    <div style={{ fontSize: '1rem', color: 'var(--tp-accent)', fontWeight: 500, marginBottom: '0.75rem', display: 'flex', alignItems: 'center', gap: '0.4rem', flexWrap: 'wrap' }}>
+                      <span>{exp.company}</span>
+                      {exp.location && (
+                        <>
+                          <span style={{ opacity: 0.6 }}>•</span>
+                          <span style={{ opacity: 0.85 }}>{exp.location}</span>
+                        </>
+                      )}
                     </div>
                     {exp.description && <p style={{ marginBottom: '0.75rem', opacity: 0.9 }}>{exp.description}</p>}
                     {exp.responsibilities && (
@@ -258,9 +264,22 @@ export const ProfessionalTemplate = ({ data, theme = 'dark' }) => {
                 {education.map((edu, idx) => (
                   <div key={idx} className="tp-card">
                     <h4 style={{ fontSize: '1.1rem' }}>{edu.degree}</h4>
-                    <div style={{ color: 'var(--tp-accent)', fontSize: '0.95rem', fontWeight: 500 }}>{edu.institution}</div>
-                    <div style={{ fontSize: '0.8rem', opacity: 0.7, margin: '0.25rem 0' }}>
-                      {edu.start_year} – {edu.end_year || 'Present'} {edu.grade ? `| ${edu.grade}` : ''}
+                    <div style={{ color: 'var(--tp-accent)', fontSize: '0.95rem', fontWeight: 500, display: 'flex', alignItems: 'center', gap: '0.4rem', flexWrap: 'wrap' }}>
+                      <span>{edu.institution}</span>
+                      {edu.location && (
+                        <>
+                          <span style={{ opacity: 0.6 }}>•</span>
+                          <span style={{ opacity: 0.85 }}>{edu.location}</span>
+                        </>
+                      )}
+                    </div>
+                    <div style={{ fontSize: '0.8rem', opacity: 0.7, margin: '0.25rem 0', display: 'flex', alignItems: 'center', gap: '0.5rem', flexWrap: 'wrap' }}>
+                      <span>{edu.start_year} – {edu.end_year || 'Present'}</span>
+                      {edu.grade && (
+                        <span style={{ background: 'rgba(245, 158, 11, 0.15)', color: '#f59e0b', padding: '0.1rem 0.4rem', borderRadius: '4px', fontWeight: 600 }}>
+                          {edu.grade}
+                        </span>
+                      )}
                     </div>
                     {edu.description && <p style={{ fontSize: '0.85rem', opacity: 0.8, marginTop: '0.5rem' }}>{edu.description}</p>}
                   </div>

@@ -64,29 +64,6 @@ export const PersonalInfoForm = ({ profile, onChange, onProfilePhotoUpdated }) =
               {(profile.full_name || 'U').charAt(0)}
             </div>
           )}
-          <button
-            type="button"
-            onClick={() => fileInputRef.current?.click()}
-            style={{
-              position: 'absolute',
-              bottom: 0,
-              right: 0,
-              background: 'var(--primary)',
-              border: 'none',
-              borderRadius: '50%',
-              width: '28px',
-              height: '28px',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              color: '#fff',
-              cursor: 'pointer',
-              boxShadow: '0 2px 6px rgba(0,0,0,0.4)'
-            }}
-            title="Upload new photo"
-          >
-            <Camera size={14} />
-          </button>
           <input
             ref={fileInputRef}
             type="file"
@@ -253,7 +230,7 @@ export const PersonalInfoForm = ({ profile, onChange, onProfilePhotoUpdated }) =
       </div>
 
       <div className="form-group">
-        <label className="form-label">Short Tagline / Bio</label>
+        <label className="form-label">Short Tagline / Bio *</label>
         <input
           type="text"
           className="form-control"
@@ -265,7 +242,7 @@ export const PersonalInfoForm = ({ profile, onChange, onProfilePhotoUpdated }) =
       </div>
 
       <div className="form-group">
-        <label className="form-label">Detailed About Me</label>
+        <label className="form-label">Detailed About Me *</label>
         <textarea
           className="form-control"
           rows={5}
@@ -277,7 +254,7 @@ export const PersonalInfoForm = ({ profile, onChange, onProfilePhotoUpdated }) =
 
       <div className="form-row">
         <div className="form-group">
-          <label className="form-label">Location</label>
+          <label className="form-label">Location *</label>
           <div style={{ position: 'relative' }}>
             <input
               type="text"
@@ -290,7 +267,7 @@ export const PersonalInfoForm = ({ profile, onChange, onProfilePhotoUpdated }) =
         </div>
 
         <div className="form-group">
-          <label className="form-label">Public Email</label>
+          <label className="form-label">Public Email *</label>
           <input
             type="email"
             className="form-control"
@@ -303,7 +280,7 @@ export const PersonalInfoForm = ({ profile, onChange, onProfilePhotoUpdated }) =
 
       <div className="form-row">
         <div className="form-group">
-          <label className="form-label">Phone Number</label>
+          <label className="form-label">Phone Number *</label>
           <input
             type="text"
             className="form-control"

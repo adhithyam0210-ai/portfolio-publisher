@@ -119,10 +119,21 @@ const login = async (req, res) => {
     }
 
     const cleanIdentifier = identifier.trim().toLowerCase();
-    const user = await dbGet(
+    let user = await dbGet(
       'SELECT * FROM users WHERE email = ? OR username = ?',
       [cleanIdentifier, cleanIdentifier]
     );
+
+    // Allow login with phone number as well
+    if (!user) {
+      const cleanDigits = identifier.replace(/\D/g, '');
+      if (cleanDigits.length === 10) {
+        const profile = await dbGet('SELECT user_id FROM profiles WHERE phone = ?', [cleanDigits]);
+        if (profile && profile.user_id) {
+          user = await dbGet('SELECT * FROM users WHERE id = ?', [profile.user_id]);
+        }
+      }
+    }
 
     if (!user) {
       return res.status(401).json({ success: false, message: 'Invalid credentials. User not found.' });

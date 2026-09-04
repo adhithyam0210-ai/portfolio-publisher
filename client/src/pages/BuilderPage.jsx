@@ -4,6 +4,7 @@ import { useAuth } from '../context/AuthContext';
 import { useToast } from '../context/ToastContext';
 import { PortfolioRenderer } from '../components/templates/PortfolioRenderer';
 import { ShareModal } from '../components/common/ShareModal';
+import { Modal } from '../components/common/Modal';
 
 import { PersonalInfoForm } from '../components/builder/PersonalInfoForm';
 import { EducationForm } from '../components/builder/EducationForm';
@@ -33,20 +34,21 @@ import {
   Share2,
   CheckCircle2,
   ArrowLeft,
-  Edit3
+  Edit3,
+  AlertCircle
 } from 'lucide-react';
 
 const TABS = [
-  { id: 'personal', label: 'Personal Info', icon: User },
-  { id: 'customization', label: 'Template & Design', icon: Palette },
-  { id: 'projects', label: 'Projects', icon: Code },
-  { id: 'skills', label: 'Skills', icon: Sparkles },
-  { id: 'experience', label: 'Experience', icon: Briefcase },
-  { id: 'education', label: 'Education', icon: GraduationCap },
-  { id: 'certifications', label: 'Certifications', icon: Award },
-  { id: 'achievements', label: 'Achievements', icon: Trophy },
-  { id: 'resume', label: 'Resume / CV', icon: FileText },
-  { id: 'visibility', label: 'Section Visibility', icon: Eye }
+  { id: 'personal', label: 'Personal Info', icon: User, required: true },
+  { id: 'customization', label: 'Template & Design', icon: Palette, required: false },
+  { id: 'projects', label: 'Projects', icon: Code, required: true },
+  { id: 'skills', label: 'Skills', icon: Sparkles, required: true },
+  { id: 'experience', label: 'Experience', icon: Briefcase, required: true },
+  { id: 'education', label: 'Education', icon: GraduationCap, required: true },
+  { id: 'certifications', label: 'Certifications (Optional)', icon: Award, optional: true },
+  { id: 'achievements', label: 'Achievements (Optional)', icon: Trophy, optional: true },
+  { id: 'resume', label: 'Resume / CV', icon: FileText, required: true },
+  { id: 'visibility', label: 'Section Visibility', icon: Eye, required: false }
 ];
 
 export const BuilderPage = ({ initialTab = 'personal', onNavigate }) => {
@@ -59,6 +61,8 @@ export const BuilderPage = ({ initialTab = 'personal', onNavigate }) => {
   const [publishing, setPublishing] = useState(false);
   const [mobileView, setMobileView] = useState('editor'); // 'editor' or 'preview' on small viewports
   const [isShareOpen, setIsShareOpen] = useState(false);
+  const [validationErrors, setValidationErrors] = useState([]);
+  const [isValidationModalOpen, setIsValidationModalOpen] = useState(false);
 
   // Autosave status: 'saved' | 'saving' | 'unsaved' | 'error'
   const [autosaveStatus, setAutosaveStatus] = useState('saved');
@@ -80,6 +84,53 @@ export const BuilderPage = ({ initialTab = 'personal', onNavigate }) => {
     resume: null,
     settings: {}
   });
+
+  // Validation for publishing: apart from certifications and achievements, every field is mandatory to publish
+  const validateForPublish = (currentData) => {
+    const missing = [];
+    const p = currentData.profile || {};
+
+    if (!p.full_name?.trim()) {
+      missing.push({ tab: 'personal', field: 'Full Name', detail: 'Enter your full name in Personal Info' });
+    }
+    if (!p.professional_title?.trim()) {
+      missing.push({ tab: 'personal', field: 'Professional Title', detail: 'Enter your job title or headline in Personal Info' });
+    }
+    if (!p.short_intro?.trim()) {
+      missing.push({ tab: 'personal', field: 'Short Tagline / Bio', detail: 'Add a one-line intro/tagline in Personal Info' });
+    }
+    if (!p.about?.trim()) {
+      missing.push({ tab: 'personal', field: 'Detailed About Me', detail: 'Provide your about/bio summary in Personal Info' });
+    }
+    if (!p.location?.trim()) {
+      missing.push({ tab: 'personal', field: 'Location', detail: 'Provide your location/city in Personal Info' });
+    }
+    if (!p.email?.trim()) {
+      missing.push({ tab: 'personal', field: 'Public Email', detail: 'Provide your contact email in Personal Info' });
+    }
+    if (!p.phone?.trim()) {
+      missing.push({ tab: 'personal', field: 'Phone Number', detail: 'Provide your phone number in Personal Info' });
+    }
+
+    if (!currentData.projects || currentData.projects.length === 0) {
+      missing.push({ tab: 'projects', field: 'Projects', detail: 'Add at least 1 showcase project in Projects tab' });
+    }
+    if (!currentData.skills || currentData.skills.length === 0) {
+      missing.push({ tab: 'skills', field: 'Skills', detail: 'Add at least 1 technical/core skill in Skills tab' });
+    }
+    if (!currentData.experience || currentData.experience.length === 0) {
+      missing.push({ tab: 'experience', field: 'Experience', detail: 'Add at least 1 job or role in Experience tab' });
+    }
+    if (!currentData.education || currentData.education.length === 0) {
+      missing.push({ tab: 'education', field: 'Education', detail: 'Add at least 1 academic degree or school in Education tab' });
+    }
+    if (!currentData.resume || !currentData.resume.file_path) {
+      missing.push({ tab: 'resume', field: 'Resume / CV', detail: 'Upload your Resume / CV PDF in Resume tab' });
+    }
+
+    // Certifications and Achievements are explicitly OPTIONAL per user instructions
+    return missing;
+  };
 
   // Helper to serialize saveable profile & customization data
   const getSerializedPayload = (currentData) => {
@@ -222,6 +273,17 @@ export const BuilderPage = ({ initialTab = 'personal', onNavigate }) => {
     if (autosaveTimerRef.current) {
       clearTimeout(autosaveTimerRef.current);
     }
+
+    // Apart from certifications and achievements, every field is important to publish
+    const missing = validateForPublish(data);
+    if (missing.length > 0) {
+      setValidationErrors(missing);
+      setIsValidationModalOpen(true);
+      setActiveTab(missing[0].tab);
+      toast.error(`Cannot publish: Please complete all mandatory sections (${missing.length} item${missing.length > 1 ? 's' : ''} missing). Note: Certifications & Achievements are optional.`);
+      return;
+    }
+
     setPublishing(true);
     try {
       const ok = await performSave(data);
@@ -554,6 +616,83 @@ export const BuilderPage = ({ initialTab = 'personal', onNavigate }) => {
         onClose={() => setIsShareOpen(false)}
         slug={slug}
       />
+
+      {/* Mandatory Fields Required to Publish Modal */}
+      <Modal
+        isOpen={isValidationModalOpen}
+        onClose={() => setIsValidationModalOpen(false)}
+        title="Mandatory Fields Required to Publish"
+        maxWidth="520px"
+      >
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+          <div style={{
+            background: 'rgba(239, 68, 68, 0.08)',
+            border: '1px solid rgba(239, 68, 68, 0.25)',
+            borderRadius: '12px',
+            padding: '1rem',
+            display: 'flex',
+            alignItems: 'flex-start',
+            gap: '0.75rem'
+          }}>
+            <AlertCircle size={20} color="#ef4444" style={{ flexShrink: 0, marginTop: '2px' }} />
+            <div>
+              <div style={{ fontWeight: 700, fontSize: '0.92rem', color: '#ef4444', marginBottom: '0.2rem' }}>
+                {validationErrors.length} Mandatory {validationErrors.length > 1 ? 'Fields are' : 'Field is'} Missing
+              </div>
+              <div style={{ fontSize: '0.82rem', color: 'var(--text-secondary)', lineHeight: 1.4 }}>
+                Apart from <strong>Certifications</strong> and <strong>Achievements</strong> (which are optional), every section and core field must be completed before your portfolio can be published live.
+              </div>
+            </div>
+          </div>
+
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem', maxHeight: '280px', overflowY: 'auto' }}>
+            {validationErrors.map((err, idx) => (
+              <div
+                key={idx}
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'space-between',
+                  padding: '0.65rem 0.85rem',
+                  borderRadius: '10px',
+                  background: 'var(--bg-subtle)',
+                  border: '1px solid var(--border-light)'
+                }}
+              >
+                <div>
+                  <div style={{ fontWeight: 600, fontSize: '0.86rem', color: 'var(--text-main)' }}>
+                    {err.field}
+                  </div>
+                  <div style={{ fontSize: '0.76rem', color: 'var(--text-muted)' }}>
+                    {err.detail}
+                  </div>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setActiveTab(err.tab);
+                    setIsValidationModalOpen(false);
+                  }}
+                  className="btn btn-secondary btn-sm"
+                  style={{ fontSize: '0.78rem', padding: '0.3rem 0.65rem', borderRadius: '6px', whiteSpace: 'nowrap' }}
+                >
+                  Go to {err.field}
+                </button>
+              </div>
+            ))}
+          </div>
+
+          <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: '0.5rem' }}>
+            <button
+              type="button"
+              className="btn btn-primary btn-sm"
+              onClick={() => setIsValidationModalOpen(false)}
+            >
+              Continue Editing
+            </button>
+          </div>
+        </div>
+      </Modal>
     </div>
   );
 };

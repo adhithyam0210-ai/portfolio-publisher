@@ -31,67 +31,39 @@
   flex-wrap: wrap;
 }
 
-.admin-title-badge {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.45rem;
-  padding: 0.28rem 0.75rem;
-  background: linear-gradient(135deg, rgba(236, 72, 153, 0.18), rgba(99, 102, 241, 0.22));
-  color: #f472b6;
-  border: 1px solid rgba(236, 72, 153, 0.45);
-  border-radius: 9999px;
-  font-size: 0.72rem;
-  font-weight: 800;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-  box-shadow: 0 0 14px rgba(236, 72, 153, 0.2);
-  margin-left: 0.5rem;
-}
-
+.admin-title-badge,
 .cool-executive-badge {
   display: inline-flex;
   align-items: center;
-  gap: 0.45rem;
-  padding: 0.32rem 0.85rem;
-  background: linear-gradient(135deg, rgba(236, 72, 153, 0.18), rgba(99, 102, 241, 0.22));
-  color: #f472b6;
-  border: 1px solid rgba(236, 72, 153, 0.45);
-  border-radius: 9999px;
-  font-size: 0.72rem;
-  font-weight: 800;
-  letter-spacing: 0.08em;
+  gap: 0.35rem;
+  padding: 0.2rem 0.55rem;
+  background: var(--bg-surface);
+  color: var(--text-secondary);
+  border: 1px solid var(--border-medium);
+  border-radius: 6px;
+  font-size: 0.7rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
   text-transform: uppercase;
-  box-shadow: 0 0 14px rgba(236, 72, 153, 0.22);
-  transition: all 0.25s ease;
+  box-shadow: none;
   user-select: none;
-}
-
-.cool-executive-badge:hover {
-  transform: scale(1.02);
-  box-shadow: 0 0 20px rgba(236, 72, 153, 0.4);
 }
 
 .cool-admin-badge {
   display: inline-flex;
   align-items: center;
   gap: 0.35rem;
-  padding: 0.22rem 0.6rem;
-  background: linear-gradient(135deg, rgba(239, 68, 68, 0.16), rgba(249, 115, 22, 0.2));
-  color: #f87171;
-  border: 1px solid rgba(239, 68, 68, 0.4);
-  border-radius: 9999px;
+  padding: 0.18rem 0.5rem;
+  background: var(--bg-surface);
+  color: var(--text-secondary);
+  border: 1px solid var(--border-medium);
+  border-radius: 6px;
   font-size: 0.68rem;
-  font-weight: 800;
-  letter-spacing: 0.06em;
+  font-weight: 700;
+  letter-spacing: 0.04em;
   text-transform: uppercase;
-  box-shadow: 0 0 10px rgba(239, 68, 68, 0.18);
-  transition: all 0.2s ease;
+  box-shadow: none;
   user-select: none;
-}
-
-.cool-admin-badge:hover {
-  transform: translateY(-1px);
-  box-shadow: 0 0 16px rgba(239, 68, 68, 0.35);
 }
 
 /* ==========================================================================

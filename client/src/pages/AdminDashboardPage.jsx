@@ -419,7 +419,7 @@ export const AdminDashboardPage = ({ onNavigate }) => {
 
                           {/* Slot 3: Toggle Status (Fixed width 88px) */}
                           <button
-                            className={`btn ${u.status === 'ACTIVE' ? 'btn-secondary' : 'btn-success'} btn-sm action-btn-status`}
+                            className={`btn ${u.status === 'ACTIVE' ? 'btn-danger' : 'btn-success'} btn-sm action-btn-status`}
                             onClick={() => handleToggleStatus(u)}
                             title={u.status === 'ACTIVE' ? 'Deactivate User' : 'Activate User'}
                           >

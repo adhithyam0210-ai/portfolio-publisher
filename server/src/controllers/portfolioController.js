@@ -282,6 +282,36 @@ const publishPortfolio = async (req, res) => {
       return res.status(404).json({ success: false, message: 'Portfolio not found.' });
     }
 
+    const profile = (await dbGet('SELECT * FROM profiles WHERE user_id = ?', [userId])) || {};
+    const projects = await dbAll('SELECT * FROM projects WHERE user_id = ?', [userId]);
+    const skills = await dbAll('SELECT * FROM skills WHERE user_id = ?', [userId]);
+    const experience = await dbAll('SELECT * FROM experience WHERE user_id = ?', [userId]);
+    const education = await dbAll('SELECT * FROM education WHERE user_id = ?', [userId]);
+    const resume = await dbGet('SELECT * FROM resumes WHERE user_id = ?', [userId]);
+
+    // Validation: Apart from certifications and achievements, every field/section is mandatory to publish
+    const missing = [];
+    if (!profile.full_name?.trim()) missing.push('Full Name');
+    if (!profile.professional_title?.trim()) missing.push('Professional Title');
+    if (!profile.short_intro?.trim()) missing.push('Short Tagline / Bio');
+    if (!profile.about?.trim()) missing.push('Detailed About Me');
+    if (!profile.location?.trim()) missing.push('Location');
+    if (!profile.email?.trim()) missing.push('Public Email');
+    if (!profile.phone?.trim()) missing.push('Phone Number');
+    if (!projects || projects.length === 0) missing.push('At least 1 Project');
+    if (!skills || skills.length === 0) missing.push('At least 1 Skill');
+    if (!experience || experience.length === 0) missing.push('At least 1 Experience record');
+    if (!education || education.length === 0) missing.push('At least 1 Education degree');
+    if (!resume || !resume.file_path) missing.push('Resume / CV document');
+
+    if (missing.length > 0) {
+      return res.status(400).json({
+        success: false,
+        message: `Cannot publish: Please complete all mandatory fields (${missing.join(', ')}). Note: Certifications and Achievements are optional.`,
+        missingFields: missing
+      });
+    }
+
     await dbRun(`
       UPDATE portfolios SET 
         status = 'published', 
