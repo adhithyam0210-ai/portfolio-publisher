@@ -80,9 +80,21 @@ const initSchema = async () => {
       twitter TEXT DEFAULT '',
       other_socials TEXT DEFAULT '[]',
       profile_image TEXT DEFAULT '',
+      availability_status TEXT DEFAULT 'Available for Opportunities',
+      show_availability_badge INTEGER DEFAULT 1,
       FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
     )
   `);
+
+  try {
+    await dbRun(`ALTER TABLE profiles ADD COLUMN availability_status TEXT DEFAULT 'Available for Opportunities'`);
+  } catch (e) {}
+  try {
+    await dbRun(`ALTER TABLE profiles ADD COLUMN show_availability_badge INTEGER DEFAULT 1`);
+  } catch (e) {}
+  try {
+    await dbRun(`ALTER TABLE profiles ADD COLUMN email TEXT DEFAULT ''`);
+  } catch (e) {}
 
   await dbRun(`
     CREATE TABLE IF NOT EXISTS portfolios (

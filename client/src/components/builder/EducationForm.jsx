@@ -44,21 +44,29 @@ export const EducationForm = ({ education, onListChange }) => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    if (!formData.degree.trim() || !formData.institution.trim() || !formData.start_year.trim()) {
-      toast.error('Degree, Institution, and Start Year are required.');
+    if (!formData.degree.trim()) {
+      toast.error('Degree / Certification Title is mandatory.');
+      return;
+    }
+    if (!formData.institution.trim()) {
+      toast.error('Institution / College / University is mandatory.');
+      return;
+    }
+    if (!formData.start_year.trim()) {
+      toast.error('Start Year is mandatory.');
       return;
     }
 
     try {
       if (editingId) {
-        await portfolioApi.updateEducation(editingId, formData);
-        onListChange(education.map((item) => (item.id === editingId ? { ...item, ...formData } : item)));
+        const res = await portfolioApi.updateEducation(editingId, formData);
+        const updatedItem = res.item || res.education || { id: editingId, ...formData };
+        onListChange(education.map((item) => (item.id === editingId ? updatedItem : item)));
         toast.success('Education record updated!');
       } else {
         const res = await portfolioApi.addEducation(formData);
-        if (res.education) {
-          onListChange([res.education, ...education]);
-        }
+        const newItem = res.item || res.education || res.data || { id: Date.now(), ...formData };
+        onListChange([newItem, ...education]);
         toast.success('Education record added!');
       }
       resetForm();

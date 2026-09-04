@@ -1,18 +1,21 @@
-import React, { useState } from 'react';
-import { Plus, Trash2, Edit2, Award, Check } from 'lucide-react';
-import { portfolioApi } from '../../services/api';
+import React, { useState, useRef } from 'react';
+import { Plus, Trash2, Edit2, Award, Check, Upload, FileText, Link, X } from 'lucide-react';
+import { portfolioApi, uploadApi } from '../../services/api';
 import { useToast } from '../../context/ToastContext';
 
 export const CertificationsForm = ({ certifications, onListChange }) => {
   const toast = useToast();
+  const fileInputRef = useRef(null);
   const [isAdding, setIsAdding] = useState(false);
   const [editingId, setEditingId] = useState(null);
+  const [uploadingCert, setUploadingCert] = useState(false);
   const [formData, setFormData] = useState({
     name: '',
     organization: '',
     issue_date: '',
     credential_id: '',
-    credential_url: ''
+    credential_url: '',
+    file_name: ''
   });
 
   const resetForm = () => {
@@ -21,7 +24,8 @@ export const CertificationsForm = ({ certifications, onListChange }) => {
       organization: '',
       issue_date: '',
       credential_id: '',
-      credential_url: ''
+      credential_url: '',
+      file_name: ''
     });
     setIsAdding(false);
     setEditingId(null);
@@ -34,33 +38,69 @@ export const CertificationsForm = ({ certifications, onListChange }) => {
       organization: c.organization,
       issue_date: c.issue_date || '',
       credential_id: c.credential_id || '',
-      credential_url: c.credential_url || ''
+      credential_url: c.credential_url || '',
+      file_name: c.credential_url ? (c.credential_url.split('/').pop() || '') : ''
     });
     setIsAdding(true);
   };
 
+  const handleFileUpload = async (e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    if (file.size > 10 * 1024 * 1024) {
+      toast.error('File size exceeds 10MB limit.');
+      return;
+    }
+
+    const uploadData = new FormData();
+    uploadData.append('certificate', file);
+
+    setUploadingCert(true);
+    try {
+      const res = await uploadApi.uploadCertificate(uploadData);
+      if (res.success && res.url) {
+        setFormData((prev) => ({
+          ...prev,
+          credential_url: res.url,
+          file_name: res.filename || file.name
+        }));
+        toast.success(`Uploaded: ${res.filename || file.name}`);
+      }
+    } catch (err) {
+      toast.error('Upload failed: ' + (err.message || 'Error'));
+    } finally {
+      setUploadingCert(false);
+      if (fileInputRef.current) fileInputRef.current.value = '';
+    }
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
-    if (!formData.name.trim() || !formData.organization.trim()) {
-      toast.error('Certification Name and Organization are required.');
+    if (!formData.name.trim()) {
+      toast.error('Certification Name is mandatory.');
+      return;
+    }
+    if (!formData.organization.trim()) {
+      toast.error('Issuing Organization is mandatory.');
       return;
     }
 
     try {
       if (editingId) {
-        await portfolioApi.updateCertification(editingId, formData);
-        onListChange(certifications.map((c) => (c.id === editingId ? { ...c, ...formData } : c)));
+        const res = await portfolioApi.updateCertification(editingId, formData);
+        const updatedItem = res.item || res.certification || { id: editingId, ...formData };
+        onListChange(certifications.map((c) => (c.id === editingId ? updatedItem : c)));
         toast.success('Certification updated!');
       } else {
         const res = await portfolioApi.addCertification(formData);
-        if (res.certification) {
-          onListChange([res.certification, ...certifications]);
-        }
+        const newItem = res.item || res.certification || res.data || { id: Date.now(), ...formData };
+        onListChange([newItem, ...certifications]);
         toast.success('Certification added!');
       }
       resetForm();
     } catch (err) {
-      toast.error('Failed to save certification.');
+      toast.error('Failed to save certification: ' + (err.message || 'Error'));
     }
   };
 
@@ -147,14 +187,92 @@ export const CertificationsForm = ({ certifications, onListChange }) => {
             </div>
           </div>
 
+          {/* Verification Option: URL OR File Explorer Document */}
           <div className="form-group">
-            <label className="form-label">Verification URL</label>
+            <label className="form-label" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              <span>Verification Document or URL</span>
+              <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>Upload file or paste link</span>
+            </label>
+
+            {formData.credential_url && formData.credential_url.startsWith('/uploads/') ? (
+              /* Uploaded Document Badge */
+              <div style={{
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'space-between',
+                padding: '0.75rem 1rem',
+                borderRadius: '10px',
+                background: 'var(--bg-subtle)',
+                border: '1px solid var(--border-medium)',
+                gap: '0.75rem'
+              }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '0.65rem', minWidth: 0 }}>
+                  <FileText size={20} color="var(--primary)" />
+                  <span style={{ fontSize: '0.88rem', fontWeight: 600, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                    {formData.file_name || formData.credential_url.split('/').pop()}
+                  </span>
+                </div>
+                <div style={{ display: 'flex', gap: '0.5rem', flexShrink: 0 }}>
+                  <a
+                    href={formData.credential_url}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="btn btn-secondary btn-sm"
+                    style={{ padding: '0.2rem 0.55rem', fontSize: '0.75rem' }}
+                  >
+                    View
+                  </a>
+                  <button
+                    type="button"
+                    onClick={() => fileInputRef.current?.click()}
+                    className="btn btn-secondary btn-sm"
+                    style={{ padding: '0.2rem 0.55rem', fontSize: '0.75rem' }}
+                  >
+                    Replace
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setFormData({ ...formData, credential_url: '', file_name: '' })}
+                    className="btn btn-outline btn-sm"
+                    style={{ padding: '0.2rem 0.55rem', fontSize: '0.75rem' }}
+                  >
+                    <X size={13} />
+                  </button>
+                </div>
+              </div>
+            ) : (
+              /* URL Input + Upload from File Explorer Button */
+              <div>
+                <div style={{ display: 'flex', gap: '0.5rem' }}>
+                  <input
+                    type="url"
+                    className="form-control"
+                    placeholder="https://aws.amazon.com/verification/... or browse document →"
+                    value={formData.credential_url}
+                    onChange={(e) => setFormData({ ...formData, credential_url: e.target.value, file_name: '' })}
+                  />
+                  <button
+                    type="button"
+                    className="btn btn-secondary btn-sm"
+                    onClick={() => fileInputRef.current?.click()}
+                    disabled={uploadingCert}
+                    style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', whiteSpace: 'nowrap', padding: '0 0.85rem' }}
+                    title="Upload Certificate Document from File Explorer"
+                  >
+                    <Upload size={14} />
+                    <span>{uploadingCert ? 'Uploading...' : 'Browse File'}</span>
+                  </button>
+                </div>
+                <span className="form-hint">Supports PDF, DOC, DOCX, PNG, JPG up to 10MB</span>
+              </div>
+            )}
+
             <input
-              type="url"
-              className="form-control"
-              placeholder="https://aws.amazon.com/verification/..."
-              value={formData.credential_url}
-              onChange={(e) => setFormData({ ...formData, credential_url: e.target.value })}
+              ref={fileInputRef}
+              type="file"
+              accept=".pdf,.doc,.docx,image/*"
+              style={{ display: 'none' }}
+              onChange={handleFileUpload}
             />
           </div>
 

@@ -16,20 +16,38 @@ const generateToken = (user) => {
 // POST /api/auth/register
 const register = async (req, res) => {
   try {
-    const { username, email, password, fullName } = req.body;
+    const { username, email, password, fullName, name, phone } = req.body;
 
-    if (!username || !email || !password) {
-      return res.status(400).json({ success: false, message: 'Username, email, and password are required.' });
+    const actualName = (fullName || name || '').trim();
+    let cleanUsername = (username || '').trim().toLowerCase().replace(/[^a-z0-9_-]/g, '-');
+
+    if (!cleanUsername && actualName) {
+      cleanUsername = actualName.toLowerCase().replace(/[^a-z0-9_-]/g, '-');
+    }
+    if (!cleanUsername && email) {
+      cleanUsername = email.split('@')[0].toLowerCase().replace(/[^a-z0-9_-]/g, '-');
     }
 
-    const cleanUsername = username.trim().toLowerCase().replace(/[^a-z0-9_-]/g, '-');
-    if (cleanUsername.length < 3) {
-      return res.status(400).json({ success: false, message: 'Username must be at least 3 characters and alphanumeric.' });
+    if (!actualName || actualName.length < 2) {
+      return res.status(400).json({ success: false, message: 'Full name must be at least 2 characters.' });
     }
 
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    if (!emailRegex.test(email)) {
-      return res.status(400).json({ success: false, message: 'Please provide a valid email address.' });
+    if (!cleanUsername || !email || !password) {
+      return res.status(400).json({ success: false, message: 'Name, email, and password are required.' });
+    }
+
+    if (cleanUsername.length < 2) {
+      cleanUsername = `${cleanUsername}-${Date.now().toString().slice(-4)}`;
+    }
+
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[a-zA-Z]{2,}$/;
+    if (!emailRegex.test(email.trim())) {
+      return res.status(400).json({ success: false, message: 'Please provide a valid email address (e.g. user@gmail.com).' });
+    }
+
+    const cleanPhone = (phone || '').replace(/\D/g, '');
+    if (!cleanPhone || cleanPhone.length !== 10) {
+      return res.status(400).json({ success: false, message: 'Phone number must be exactly 10 digits (numbers only).' });
     }
 
     if (password.length < 6) {
@@ -39,28 +57,29 @@ const register = async (req, res) => {
     // Check existing username or email
     const existingUser = await dbGet(
       'SELECT id, username, email FROM users WHERE username = ? OR email = ?',
-      [cleanUsername, email.toLowerCase()]
+      [cleanUsername, email.trim().toLowerCase()]
     );
 
     if (existingUser) {
       if (existingUser.username.toLowerCase() === cleanUsername) {
-        return res.status(409).json({ success: false, message: 'This username is already taken. Please choose another.' });
+        cleanUsername = `${cleanUsername}-${Math.floor(100 + Math.random() * 900)}`;
+      } else {
+        return res.status(409).json({ success: false, message: 'An account with this email already exists.' });
       }
-      return res.status(409).json({ success: false, message: 'An account with this email already exists.' });
     }
 
     const password_hash = await bcrypt.hash(password, 10);
     const userInsert = await dbRun(
       'INSERT INTO users (username, email, password_hash, role, status) VALUES (?, ?, ?, ?, ?)',
-      [cleanUsername, email.toLowerCase(), password_hash, 'USER', 'ACTIVE']
+      [cleanUsername, email.trim().toLowerCase(), password_hash, 'USER', 'ACTIVE']
     );
 
     const userId = userInsert.lastID;
 
-    // Create profile
+    // Create profile with phone
     await dbRun(
-      'INSERT INTO profiles (user_id, full_name, professional_title, short_intro, about) VALUES (?, ?, ?, ?, ?)',
-      [userId, fullName || cleanUsername, 'Aspiring Professional', 'Welcome to my portfolio!', '']
+      'INSERT INTO profiles (user_id, full_name, phone, professional_title, short_intro, about) VALUES (?, ?, ?, ?, ?, ?)',
+      [userId, actualName || cleanUsername, phone ? phone.trim() : '', 'Aspiring Professional', 'Welcome to my portfolio!', '']
     );
 
     // Create default portfolio record
@@ -265,11 +284,92 @@ const changePassword = async (req, res) => {
   }
 };
 
+// POST /api/auth/google
+const googleAuth = async (req, res) => {
+  try {
+    const { email, name, googleId, picture } = req.body;
+    if (!email) {
+      return res.status(400).json({ success: false, message: 'Google account email is required.' });
+    }
+
+    const cleanEmail = email.trim().toLowerCase();
+    let user = await dbGet('SELECT * FROM users WHERE email = ?', [cleanEmail]);
+
+    if (!user) {
+      // Register new user with Google profile
+      const actualName = (name || cleanEmail.split('@')[0]).trim();
+      let cleanUsername = actualName.toLowerCase().replace(/[^a-z0-9]/g, '-');
+      if (cleanUsername.length < 2) {
+        cleanUsername = `google-${Date.now().toString().slice(-4)}`;
+      }
+
+      // Handle username collisions
+      const existingUser = await dbGet('SELECT id FROM users WHERE username = ?', [cleanUsername]);
+      if (existingUser) {
+        cleanUsername = `${cleanUsername}-${Math.floor(100 + Math.random() * 900)}`;
+      }
+
+      const randomPassword = crypto.randomBytes(16).toString('hex');
+      const password_hash = await bcrypt.hash(randomPassword, 10);
+
+      const userInsert = await dbRun(
+        'INSERT INTO users (username, email, password_hash, role, status) VALUES (?, ?, ?, ?, ?)',
+        [cleanUsername, cleanEmail, password_hash, 'USER', 'ACTIVE']
+      );
+      const userId = userInsert.lastID;
+
+      await dbRun(
+        'INSERT INTO profiles (user_id, full_name, professional_title, short_intro, about, profile_image) VALUES (?, ?, ?, ?, ?, ?)',
+        [userId, actualName, 'Aspiring Professional', 'Welcome to my portfolio!', '', picture || '']
+      );
+
+      await dbRun(
+        'INSERT INTO portfolios (user_id, slug, template, theme, status) VALUES (?, ?, ?, ?, ?)',
+        [userId, cleanUsername, 'modern', 'dark', 'draft']
+      );
+
+      await dbRun(
+        'INSERT INTO user_settings (user_id, contact_visible, resume_downloadable, email_visible, phone_visible) VALUES (?, 1, 1, 1, 0)',
+        [userId]
+      );
+
+      user = await dbGet('SELECT id, username, email, role, status, created_at FROM users WHERE id = ?', [userId]);
+    } else {
+      if (user.status !== 'ACTIVE') {
+        return res.status(403).json({ success: false, message: 'Your account has been deactivated by administrator.' });
+      }
+      await dbRun('UPDATE users SET last_login = CURRENT_TIMESTAMP WHERE id = ?', [user.id]);
+    }
+
+    const token = generateToken(user);
+    const safeUser = {
+      id: user.id,
+      username: user.username,
+      email: user.email,
+      role: user.role,
+      status: user.status,
+      last_login: new Date().toISOString()
+    };
+
+    return res.json({
+      success: true,
+      message: 'Google authentication successful!',
+      token,
+      user: safeUser
+    });
+  } catch (err) {
+    console.error('googleAuth error:', err);
+    return res.status(500).json({ success: false, message: 'Google authentication failed.' });
+  }
+};
+
 module.exports = {
   register,
   login,
+  googleAuth,
   getMe,
   forgotPassword,
   resetPassword,
   changePassword
 };
+

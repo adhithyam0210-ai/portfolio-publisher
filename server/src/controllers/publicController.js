@@ -95,7 +95,9 @@ const getPublicPortfolio = async (req, res) => {
       github: profile ? profile.github : '',
       twitter: profile ? profile.twitter : '',
       other_socials: otherSocials,
-      email: (settings.contact_visible && settings.email_visible && profile) ? profile.email : null,
+      availability_status: profile?.availability_status || 'Available for Opportunities',
+      show_availability_badge: profile?.show_availability_badge !== undefined ? profile.show_availability_badge : 1,
+      email: (settings.contact_visible && settings.email_visible) ? (profile?.email || user.email) : null,
       phone: (settings.contact_visible && settings.phone_visible && profile) ? profile.phone : null
     };
 

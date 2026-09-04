@@ -46,14 +46,30 @@ export const AuthProvider = ({ children }) => {
     throw new Error(res.message || 'Login failed');
   };
 
-  const register = async (username, email, password) => {
-    const res = await authApi.register({ username, email, password });
+  const register = async (usernameOrData, email, password, fullName, phone) => {
+    let payload;
+    if (typeof usernameOrData === 'object') {
+      payload = usernameOrData;
+    } else {
+      payload = { username: usernameOrData, email, password, fullName, phone };
+    }
+    const res = await authApi.register(payload);
     if (res.success && res.token) {
       setAuthToken(res.token);
       setUser(res.user);
       return res.user;
     }
     throw new Error(res.message || 'Registration failed');
+  };
+
+  const loginWithGoogle = async (googlePayload) => {
+    const res = await authApi.googleAuth(googlePayload);
+    if (res.success && res.token) {
+      setAuthToken(res.token);
+      setUser(res.user);
+      return res.user;
+    }
+    throw new Error(res.message || 'Google sign-in failed');
   };
 
   const logout = () => {
@@ -75,6 +91,7 @@ export const AuthProvider = ({ children }) => {
         isAdmin,
         login,
         register,
+        loginWithGoogle,
         logout,
         refreshUser,
       }}

@@ -81,7 +81,7 @@ const getMyPortfolio = async (req, res) => {
 
     const payload = {
       user,
-      profile: { ...profile, other_socials: otherSocials },
+      profile: { ...profile, email: profile?.email || user?.email, other_socials: otherSocials },
       portfolio: { ...portfolio, section_visibility: sectionVisibility },
       settings,
       education,
@@ -118,10 +118,15 @@ const updateProfile = async (req, res) => {
       github,
       twitter,
       other_socials,
-      profile_image
+      profile_image,
+      availability_status,
+      show_availability_badge,
+      email
     } = req.body;
 
     const socialsStr = typeof other_socials === 'string' ? other_socials : JSON.stringify(other_socials || []);
+    const statusText = availability_status !== undefined ? availability_status : 'Available for Opportunities';
+    const showBadge = show_availability_badge !== undefined ? (show_availability_badge ? 1 : 0) : 1;
 
     await dbRun(`
       UPDATE profiles SET
@@ -136,7 +141,10 @@ const updateProfile = async (req, res) => {
         github = ?,
         twitter = ?,
         other_socials = ?,
-        profile_image = COALESCE(?, profile_image)
+        profile_image = COALESCE(?, profile_image),
+        availability_status = ?,
+        show_availability_badge = ?,
+        email = COALESCE(?, email)
       WHERE user_id = ?
     `, [
       full_name || '',
@@ -151,11 +159,18 @@ const updateProfile = async (req, res) => {
       twitter || '',
       socialsStr,
       profile_image,
+      statusText,
+      showBadge,
+      email !== undefined ? email : null,
       userId
     ]);
 
     const updatedProfile = await dbGet('SELECT * FROM profiles WHERE user_id = ?', [userId]);
-    return res.json({ success: true, message: 'Profile updated successfully!', profile: updatedProfile });
+    const returnProfile = {
+      ...updatedProfile,
+      email: updatedProfile.email || req.user.email
+    };
+    return res.json({ success: true, message: 'Profile updated successfully!', profile: returnProfile });
   } catch (err) {
     console.error('updateProfile error:', err);
     return res.status(500).json({ success: false, message: 'Failed to update profile.' });
@@ -168,9 +183,9 @@ const updateCustomization = async (req, res) => {
     const userId = req.user.id;
     const { template, theme, font_family, accent_color, layout_style, section_visibility } = req.body;
 
-    const visibilityStr = typeof section_visibility === 'string' 
-      ? section_visibility 
-      : JSON.stringify(section_visibility || {});
+    const visibilityStr = section_visibility !== undefined
+      ? (typeof section_visibility === 'string' ? section_visibility : JSON.stringify(section_visibility || {}))
+      : null;
 
     await dbRun(`
       UPDATE portfolios SET
@@ -182,7 +197,15 @@ const updateCustomization = async (req, res) => {
         section_visibility = COALESCE(?, section_visibility),
         updated_at = CURRENT_TIMESTAMP
       WHERE user_id = ?
-    `, [template, theme, font_family, accent_color, layout_style, visibilityStr, userId]);
+    `, [
+      template !== undefined ? template : null,
+      theme !== undefined ? theme : null,
+      font_family !== undefined ? font_family : null,
+      accent_color !== undefined ? accent_color : null,
+      layout_style !== undefined ? layout_style : null,
+      visibilityStr,
+      userId
+    ]);
 
     const updated = await dbGet('SELECT * FROM portfolios WHERE user_id = ?', [userId]);
     return res.json({ success: true, message: 'Portfolio customization saved!', portfolio: updated });
@@ -337,7 +360,7 @@ const addEducation = async (req, res) => {
     `, [req.user.id, degree, institution, start_year, end_year || '', grade || '', description || '']);
 
     const item = await dbGet('SELECT * FROM education WHERE id = ?', [result.lastID]);
-    return res.status(201).json({ success: true, message: 'Education record added!', item });
+    return res.status(201).json({ success: true, message: 'Education record added!', item, education: item });
   } catch (err) {
     return res.status(500).json({ success: false, message: 'Failed to add education record.' });
   }
@@ -358,7 +381,7 @@ const updateEducation = async (req, res) => {
     `, [degree, institution, start_year, end_year || '', grade || '', description || '', id, req.user.id]);
 
     const item = await dbGet('SELECT * FROM education WHERE id = ?', [id]);
-    return res.json({ success: true, message: 'Education updated!', item });
+    return res.json({ success: true, message: 'Education updated!', item, education: item });
   } catch (err) {
     return res.status(500).json({ success: false, message: 'Failed to update education.' });
   }
@@ -387,7 +410,7 @@ const addSkill = async (req, res) => {
     `, [req.user.id, skill_name.trim(), proficiency || 'Intermediate', category || 'Technical']);
 
     const item = await dbGet('SELECT * FROM skills WHERE id = ?', [result.lastID]);
-    return res.status(201).json({ success: true, message: 'Skill added!', item });
+    return res.status(201).json({ success: true, message: 'Skill added!', item, skill: item });
   } catch (err) {
     return res.status(500).json({ success: false, message: 'Failed to add skill.' });
   }
@@ -407,7 +430,7 @@ const updateSkill = async (req, res) => {
     `, [skill_name, proficiency || 'Intermediate', category || 'Technical', id, req.user.id]);
 
     const item = await dbGet('SELECT * FROM skills WHERE id = ?', [id]);
-    return res.json({ success: true, message: 'Skill updated!', item });
+    return res.json({ success: true, message: 'Skill updated!', item, skill: item });
   } catch (err) {
     return res.status(500).json({ success: false, message: 'Failed to update skill.' });
   }
@@ -438,7 +461,7 @@ const addProject = async (req, res) => {
     `, [req.user.id, title, description, technologies || '', image_url || '', github_url || '', live_url || '', duration || '']);
 
     const item = await dbGet('SELECT * FROM projects WHERE id = ?', [result.lastID]);
-    return res.status(201).json({ success: true, message: 'Project added!', item });
+    return res.status(201).json({ success: true, message: 'Project added!', item, project: item });
   } catch (err) {
     return res.status(500).json({ success: false, message: 'Failed to add project.' });
   }
@@ -459,7 +482,7 @@ const updateProject = async (req, res) => {
     `, [title, description, technologies || '', image_url || '', github_url || '', live_url || '', duration || '', id, req.user.id]);
 
     const item = await dbGet('SELECT * FROM projects WHERE id = ?', [id]);
-    return res.json({ success: true, message: 'Project updated!', item });
+    return res.json({ success: true, message: 'Project updated!', item, project: item });
   } catch (err) {
     return res.status(500).json({ success: false, message: 'Failed to update project.' });
   }
@@ -490,7 +513,7 @@ const addExperience = async (req, res) => {
     `, [req.user.id, company, position, start_date, end_date || '', is_current ? 1 : 0, description || '', responsibilities || '']);
 
     const item = await dbGet('SELECT * FROM experience WHERE id = ?', [result.lastID]);
-    return res.status(201).json({ success: true, message: 'Experience added!', item });
+    return res.status(201).json({ success: true, message: 'Experience added!', item, experience: item });
   } catch (err) {
     return res.status(500).json({ success: false, message: 'Failed to add experience.' });
   }
@@ -511,7 +534,7 @@ const updateExperience = async (req, res) => {
     `, [company, position, start_date, end_date || '', is_current ? 1 : 0, description || '', responsibilities || '', id, req.user.id]);
 
     const item = await dbGet('SELECT * FROM experience WHERE id = ?', [id]);
-    return res.json({ success: true, message: 'Experience updated!', item });
+    return res.json({ success: true, message: 'Experience updated!', item, experience: item });
   } catch (err) {
     return res.status(500).json({ success: false, message: 'Failed to update experience.' });
   }
@@ -542,7 +565,7 @@ const addCertification = async (req, res) => {
     `, [req.user.id, name, organization, issue_date || '', credential_id || '', credential_url || '']);
 
     const item = await dbGet('SELECT * FROM certifications WHERE id = ?', [result.lastID]);
-    return res.status(201).json({ success: true, message: 'Certification added!', item });
+    return res.status(201).json({ success: true, message: 'Certification added!', item, certification: item });
   } catch (err) {
     return res.status(500).json({ success: false, message: 'Failed to add certification.' });
   }
@@ -563,7 +586,7 @@ const updateCertification = async (req, res) => {
     `, [name, organization, issue_date || '', credential_id || '', credential_url || '', id, req.user.id]);
 
     const item = await dbGet('SELECT * FROM certifications WHERE id = ?', [id]);
-    return res.json({ success: true, message: 'Certification updated!', item });
+    return res.json({ success: true, message: 'Certification updated!', item, certification: item });
   } catch (err) {
     return res.status(500).json({ success: false, message: 'Failed to update certification.' });
   }
@@ -592,7 +615,7 @@ const addAchievement = async (req, res) => {
     `, [req.user.id, title, description || '', date || '']);
 
     const item = await dbGet('SELECT * FROM achievements WHERE id = ?', [result.lastID]);
-    return res.status(201).json({ success: true, message: 'Achievement added!', item });
+    return res.status(201).json({ success: true, message: 'Achievement added!', item, achievement: item });
   } catch (err) {
     return res.status(500).json({ success: false, message: 'Failed to add achievement.' });
   }
@@ -612,7 +635,7 @@ const updateAchievement = async (req, res) => {
     `, [title, description || '', date || '', id, req.user.id]);
 
     const item = await dbGet('SELECT * FROM achievements WHERE id = ?', [id]);
-    return res.json({ success: true, message: 'Achievement updated!', item });
+    return res.json({ success: true, message: 'Achievement updated!', item, achievement: item });
   } catch (err) {
     return res.status(500).json({ success: false, message: 'Failed to update achievement.' });
   }

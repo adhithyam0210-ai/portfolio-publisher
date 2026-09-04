@@ -66,7 +66,7 @@ export const ResumeForm = ({ resume, onResumeUpdated }) => {
   };
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
+    <div style={{ display: 'flex', flexDirection: 'column', gap: '1.75rem' }}>
       <div>
         <h3 style={{ fontSize: '1.1rem', fontWeight: 600 }}>Resume & CV Document</h3>
         <p style={{ fontSize: '0.85rem', color: 'var(--text-muted)' }}>

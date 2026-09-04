@@ -13,6 +13,7 @@ import { ExperienceForm } from '../components/builder/ExperienceForm';
 import { CertificationsForm } from '../components/builder/CertificationsForm';
 import { AchievementsForm } from '../components/builder/AchievementsForm';
 import { ResumeForm } from '../components/builder/ResumeForm';
+import { SectionVisibilityForm } from '../components/builder/SectionVisibilityForm';
 import { CustomizationForm } from '../components/builder/CustomizationForm';
 
 import {
@@ -44,7 +45,8 @@ const TABS = [
   { id: 'education', label: 'Education', icon: GraduationCap },
   { id: 'certifications', label: 'Certifications', icon: Award },
   { id: 'achievements', label: 'Achievements', icon: Trophy },
-  { id: 'resume', label: 'Resume / CV', icon: FileText }
+  { id: 'resume', label: 'Resume / CV', icon: FileText },
+  { id: 'visibility', label: 'Section Visibility', icon: Eye }
 ];
 
 export const BuilderPage = ({ initialTab = 'personal', onNavigate }) => {
@@ -354,6 +356,18 @@ export const BuilderPage = ({ initialTab = 'personal', onNavigate }) => {
               <ResumeForm
                 resume={data.resume}
                 onResumeUpdated={(updatedResume) => setData({ ...data, resume: updatedResume })}
+              />
+            )}
+
+            {activeTab === 'visibility' && (
+              <SectionVisibilityForm
+                portfolio={data.portfolio || {}}
+                onVisibilityChange={(newVis) =>
+                  setData((prev) => ({
+                    ...prev,
+                    portfolio: { ...prev.portfolio, section_visibility: newVis }
+                  }))
+                }
               />
             )}
           </div>

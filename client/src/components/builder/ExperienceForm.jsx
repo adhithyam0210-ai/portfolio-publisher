@@ -47,8 +47,16 @@ export const ExperienceForm = ({ experience, onListChange }) => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    if (!formData.company.trim() || !formData.position.trim() || !formData.start_date.trim()) {
-      toast.error('Company, Position, and Start Date are required.');
+    if (!formData.company.trim()) {
+      toast.error('Company Name is mandatory.');
+      return;
+    }
+    if (!formData.position.trim()) {
+      toast.error('Position / Job Title is mandatory.');
+      return;
+    }
+    if (!formData.start_date.trim()) {
+      toast.error('Start Date is mandatory.');
       return;
     }
 
@@ -60,19 +68,19 @@ export const ExperienceForm = ({ experience, onListChange }) => {
 
     try {
       if (editingId) {
-        await portfolioApi.updateExperience(editingId, payload);
-        onListChange(experience.map((item) => (item.id === editingId ? { ...item, ...payload } : item)));
+        const res = await portfolioApi.updateExperience(editingId, payload);
+        const updatedItem = res.item || res.experience || { id: editingId, ...payload };
+        onListChange(experience.map((item) => (item.id === editingId ? updatedItem : item)));
         toast.success('Experience record updated!');
       } else {
         const res = await portfolioApi.addExperience(payload);
-        if (res.experience) {
-          onListChange([res.experience, ...experience]);
-        }
+        const newItem = res.item || res.experience || res.data || { id: Date.now(), ...payload };
+        onListChange([newItem, ...experience]);
         toast.success('Experience record added!');
       }
       resetForm();
     } catch (err) {
-      toast.error('Failed to save experience.');
+      toast.error('Failed to save experience: ' + (err.message || 'Error'));
     }
   };
 

@@ -119,8 +119,53 @@ const downloadResumeBySlug = async (req, res) => {
   }
 };
 
+// POST /api/upload/project-image
+const uploadProjectImage = async (req, res) => {
+  try {
+    if (!req.file) {
+      return res.status(400).json({ success: false, message: 'No image file uploaded.' });
+    }
+
+    const relativeUrl = `/uploads/projects/${req.file.filename}`;
+    return res.json({
+      success: true,
+      message: 'Project image uploaded successfully!',
+      image_url: relativeUrl,
+      url: relativeUrl
+    });
+  } catch (err) {
+    console.error('uploadProjectImage error:', err);
+    return res.status(500).json({ success: false, message: 'Failed to upload project image.' });
+  }
+};
+
+// POST /api/upload/certificate
+const uploadCertificate = async (req, res) => {
+  try {
+    if (!req.file) {
+      return res.status(400).json({ success: false, message: 'No certificate document or image uploaded.' });
+    }
+
+    const relativeUrl = `/uploads/certificates/${req.file.filename}`;
+    return res.json({
+      success: true,
+      message: 'Certificate document uploaded successfully!',
+      url: relativeUrl,
+      credential_url: relativeUrl,
+      filename: req.file.originalname,
+      original_name: req.file.originalname,
+      file_size: req.file.size
+    });
+  } catch (err) {
+    console.error('uploadCertificate error:', err);
+    return res.status(500).json({ success: false, message: 'Failed to upload certificate document.' });
+  }
+};
+
 module.exports = {
   uploadAvatar,
+  uploadProjectImage,
+  uploadCertificate,
   uploadResume,
   deleteResume,
   downloadResumeBySlug

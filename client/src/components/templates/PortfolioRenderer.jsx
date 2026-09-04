@@ -38,7 +38,8 @@ export const PortfolioRenderer = ({ data }) => {
   const styleWrapper = {
     '--user-accent': accentColor,
     '--primary': accentColor,
-    fontFamily: `"${fontFamily}", system-ui, sans-serif`
+    '--portfolio-font': `"${fontFamily}", system-ui, -apple-system, sans-serif`,
+    fontFamily: `"${fontFamily}", system-ui, -apple-system, sans-serif`
   };
 
   return (

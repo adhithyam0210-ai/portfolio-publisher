@@ -32,25 +32,25 @@ export const AchievementsForm = ({ achievements, onListChange }) => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (!formData.title.trim()) {
-      toast.error('Achievement title is required.');
+      toast.error('Achievement Title is mandatory.');
       return;
     }
 
     try {
       if (editingId) {
-        await portfolioApi.updateAchievement(editingId, formData);
-        onListChange(achievements.map((a) => (a.id === editingId ? { ...a, ...formData } : a)));
+        const res = await portfolioApi.updateAchievement(editingId, formData);
+        const updatedItem = res.item || res.achievement || { id: editingId, ...formData };
+        onListChange(achievements.map((a) => (a.id === editingId ? updatedItem : a)));
         toast.success('Achievement updated!');
       } else {
         const res = await portfolioApi.addAchievement(formData);
-        if (res.achievement) {
-          onListChange([res.achievement, ...achievements]);
-        }
+        const newItem = res.item || res.achievement || res.data || { id: Date.now(), ...formData };
+        onListChange([newItem, ...achievements]);
         toast.success('Achievement added!');
       }
       resetForm();
     } catch (err) {
-      toast.error('Failed to save achievement.');
+      toast.error('Failed to save achievement: ' + (err.message || 'Error'));
     }
   };
 

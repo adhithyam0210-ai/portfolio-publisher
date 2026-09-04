@@ -20,6 +20,8 @@ import {
   Briefcase,
   Layers,
   Sparkles,
+  Award,
+  GraduationCap,
   QrCode,
   ArrowRight,
   TrendingUp
@@ -218,25 +220,25 @@ export const DashboardPage = ({ onNavigate }) => {
 
         <div className="stat-metric-card">
           <div className="stat-icon-wrapper" style={{ background: 'rgba(16, 185, 129, 0.12)', color: '#10b981' }}>
-            <Briefcase size={20} />
+            <Award size={20} />
           </div>
           <div>
             <div style={{ fontSize: '1.35rem', fontWeight: 800, color: 'var(--text-main)' }}>
-              {data?.experience?.length || 0}
+              {data?.certifications?.length || 0}
             </div>
-            <div style={{ fontSize: '0.78rem', color: 'var(--text-secondary)', fontWeight: 600 }}>Work Roles</div>
+            <div style={{ fontSize: '0.78rem', color: 'var(--text-secondary)', fontWeight: 600 }}>Certifications</div>
           </div>
         </div>
 
         <div className="stat-metric-card">
-          <div className="stat-icon-wrapper" style={{ background: 'var(--accent-tag-bg)', color: 'var(--accent-primary)' }}>
-            <Globe size={20} />
+          <div className="stat-icon-wrapper" style={{ background: 'rgba(59, 130, 246, 0.12)', color: '#3b82f6' }}>
+            <GraduationCap size={20} />
           </div>
           <div>
-            <div style={{ fontSize: '1.15rem', fontWeight: 800, color: 'var(--text-main)', textTransform: 'capitalize' }}>
-              {portfolio.template || 'Modern'}
+            <div style={{ fontSize: '1.35rem', fontWeight: 800, color: 'var(--text-main)' }}>
+              {data?.education?.length || 0}
             </div>
-            <div style={{ fontSize: '0.78rem', color: 'var(--text-secondary)', fontWeight: 600 }}>Active Design Style</div>
+            <div style={{ fontSize: '0.78rem', color: 'var(--text-secondary)', fontWeight: 600 }}>Academic Degrees</div>
           </div>
         </div>
       </div>

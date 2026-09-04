@@ -4,10 +4,25 @@
    Zero Emojis • Vector Icons • Card Grid • Clean Micro-Interactions
    ========================================================================== */
 
+.portfolio-template-wrapper {
+  font-family: var(--portfolio-font, var(--font-main));
+}
+.portfolio-template-wrapper h1,
+.portfolio-template-wrapper h2,
+.portfolio-template-wrapper h3,
+.portfolio-template-wrapper h4,
+.portfolio-template-wrapper h5,
+.portfolio-template-wrapper p,
+.portfolio-template-wrapper span,
+.portfolio-template-wrapper a,
+.portfolio-template-wrapper div {
+  font-family: var(--portfolio-font, inherit);
+}
+
 .portfolio-view-root {
   min-height: 100vh;
   width: 100%;
-  font-family: var(--font-main);
+  font-family: var(--portfolio-font, var(--font-main));
   background-color: var(--bg-page);
   color: var(--text-main);
   transition: background-color 0.2s ease, color 0.2s ease;
@@ -104,7 +119,41 @@
   font-size: 0.775rem;
   font-weight: 600;
   color: #10b981;
-  margin-bottom: 0.75rem;
+}
+
+.location-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  font-size: 0.85rem;
+  color: var(--tp-muted, var(--text-secondary));
+  font-weight: 500;
+}
+
+.location-pill svg {
+  color: var(--user-accent, var(--accent-primary, #059669));
+}
+
+.tm-contact-btn {
+  background: var(--user-accent, var(--accent-primary, #059669));
+  border: 1px solid var(--user-accent, var(--accent-primary, #059669));
+  color: #ffffff !important;
+  font-weight: 600;
+  border-radius: 8px;
+  padding: 0.45rem 1rem;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.875rem;
+  transition: all 0.2s ease;
+  text-decoration: none;
+  box-shadow: 0 2px 8px rgba(5, 150, 105, 0.25);
+}
+
+.tm-contact-btn:hover {
+  filter: brightness(0.9);
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(5, 150, 105, 0.35);
 }
 
 .tm-project-grid {
@@ -143,6 +192,37 @@
   display: flex;
   flex-direction: column;
   flex: 1;
+}
+
+.tm-card {
+  background: var(--tp-card);
+  border: 1px solid var(--tp-border);
+  border-radius: 14px;
+  padding: 1.5rem;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+  transition: transform 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.tm-card:hover {
+  border-color: rgba(99, 102, 241, 0.35);
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.08);
+}
+
+.tm-skill-pill {
+  background: var(--tp-subtle);
+  border: 1px solid var(--tp-border);
+  border-radius: 10px;
+  padding: 0.5rem 0.9rem;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.65rem;
+  transition: transform 0.15s ease, border-color 0.15s ease, box-shadow 0.15s ease;
+}
+
+.tm-skill-pill:hover {
+  transform: translateY(-2px);
+  border-color: var(--user-accent, var(--primary));
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.06);
 }
 
 /* ==========================================================================
@@ -232,79 +312,189 @@
 }
 
 /* ==========================================================================
-   3. Minimalist Linear Aesthetic Template
+   3. Minimalist Linear Aesthetic Template (Swiss Modernism)
    ========================================================================== */
 .template-minimal.theme-dark {
-  background-color: #0a0a0a;
-  color: #ededed;
-  --tmin-border: rgba(255, 255, 255, 0.1);
-  --tmin-subtle: #141414;
+  --tmin-bg: #0a0a0a;
+  --tmin-card: #141414;
+  --tmin-border: rgba(255, 255, 255, 0.12);
+  --tmin-subtle: #1c1c1c;
+  --tmin-text: #ededed;
+  --tmin-accent: var(--user-accent, #ffffff);
+  background-color: var(--tmin-bg);
+  color: var(--tmin-text);
 }
 
 .template-minimal.theme-light {
-  background-color: #ffffff;
-  color: #171717;
-  --tmin-border: #e5e5e5;
-  --tmin-subtle: #f5f5f5;
+  --tmin-bg: #ffffff;
+  --tmin-card: #f9f9fb;
+  --tmin-border: #e2e8f0;
+  --tmin-subtle: #f1f3f7;
+  --tmin-text: #0f172a;
+  --tmin-accent: var(--user-accent, #0f172a);
+  background-color: var(--tmin-bg);
+  color: var(--tmin-text);
 }
 
-.tmin-header {
-  padding: 4.5rem 1.5rem 2.5rem;
-  max-width: 880px;
+.tmin-hero {
+  padding: 4.5rem 1.5rem 3.5rem;
+  max-width: 960px;
   margin: 0 auto;
   border-bottom: 1px solid var(--tmin-border);
 }
 
-.tmin-item-row {
-  display: flex;
-  justify-content: space-between;
-  align-items: baseline;
-  padding: 1rem 0;
+.tmin-avatar {
+  width: 96px;
+  height: 96px;
+  border-radius: 50%;
+  object-fit: cover;
+  margin-bottom: 1.5rem;
+  border: 2px solid var(--tmin-border);
+}
+
+.tmin-section {
+  padding: 3.25rem 1.5rem;
+  max-width: 960px;
+  margin: 0 auto;
   border-bottom: 1px solid var(--tmin-border);
 }
 
-.tmin-tag {
-  font-family: var(--font-mono);
-  font-size: 0.75rem;
-  color: var(--text-muted);
+.tmin-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  padding: 1.35rem 0;
+  border-bottom: 1px dashed var(--tmin-border);
+  transition: transform 0.15s ease;
+}
+
+.tmin-item:last-child {
+  border-bottom: none;
+}
+
+.tmin-item:hover {
+  transform: translateX(4px);
 }
 
 /* ==========================================================================
-   4. Creative Contemporary Template
+   4. Creative Contemporary Template (Playful Asymmetric Cards & Morphing)
    ========================================================================== */
 .template-creative.theme-dark {
-  background-color: #09090b;
-  color: #fafafa;
+  --tc-bg: #09090b;
   --tc-card: #18181b;
-  --tc-border: rgba(255, 255, 255, 0.1);
+  --tc-border: rgba(236, 72, 153, 0.2);
   --tc-subtle: #27272a;
+  --tc-text: #fafafa;
+  --tc-accent: var(--user-accent, #ec4899);
+  background-color: var(--tc-bg);
+  color: var(--tc-text);
 }
 
 .template-creative.theme-light {
-  background-color: #fcfcfc;
-  color: #18181b;
+  --tc-bg: #fff8f8;
   --tc-card: #ffffff;
-  --tc-border: #e4e4e7;
-  --tc-subtle: #f4f4f5;
+  --tc-border: rgba(236, 72, 153, 0.25);
+  --tc-subtle: #fdf2f8;
+  --tc-text: #18181b;
+  --tc-accent: var(--user-accent, #ec4899);
+  background-color: var(--tc-bg);
+  color: var(--tc-text);
 }
 
-.tc-grid-showcase {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
-  gap: 1.75rem;
+.tc-hero {
+  padding: 5rem 1.5rem 4rem;
+  position: relative;
+  overflow: hidden;
 }
 
-.tc-card {
+.tc-hero-card {
+  background: rgba(30, 27, 75, 0.5);
+  border: 2px solid var(--tc-border);
+  border-radius: 28px;
+  padding: 3rem;
+  max-width: 1020px;
+  margin: 0 auto;
+  box-shadow: 0 20px 40px -15px rgba(236, 72, 153, 0.2);
+  display: flex;
+  align-items: center;
+  gap: 3rem;
+}
+
+.template-creative.theme-light .tc-hero-card {
+  background: #ffffff;
+  border-color: rgba(236, 72, 153, 0.3);
+  box-shadow: 0 15px 30px -10px rgba(236, 72, 153, 0.15);
+}
+
+@media (max-width: 768px) {
+  .tc-hero-card {
+    flex-direction: column;
+    text-align: center;
+    gap: 1.75rem;
+    padding: 2rem 1.5rem;
+  }
+}
+
+.tc-avatar {
+  width: 150px;
+  height: 150px;
+  border-radius: 30% 70% 70% 30% / 30% 30% 70% 70%;
+  object-fit: cover;
+  border: 4px solid var(--tc-accent);
+  animation: morphShape 8s ease-in-out infinite;
+}
+
+@keyframes morphShape {
+  0%, 100% { border-radius: 30% 70% 70% 30% / 30% 30% 70% 70%; }
+  50% { border-radius: 70% 30% 30% 70% / 70% 70% 30% 30%; }
+}
+
+.tc-project-card {
   background: var(--tc-card);
   border: 1px solid var(--tc-border);
-  border-radius: 16px;
-  padding: 1.5rem;
-  transition: transform 0.2s ease, border-color 0.2s ease;
+  border-radius: 20px;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1), border-color 0.3s ease, box-shadow 0.3s ease;
+  box-shadow: 0 8px 24px -6px rgba(0, 0, 0, 0.1);
 }
 
-.tc-card:hover {
+.tc-project-card:hover {
+  transform: translateY(-6px) scale(1.01);
+  border-color: var(--tc-accent);
+  box-shadow: 0 18px 36px -8px rgba(236, 72, 153, 0.25);
+}
+
+/* Modern Template Elevated Interactive Cards */
+.tm-card {
+  background: var(--tp-card);
+  border: 1px solid var(--tp-border);
+  border-radius: 14px;
+  padding: 1.5rem;
+  transition: transform 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease;
+  box-shadow: 0 4px 18px -3px rgba(0, 0, 0, 0.05);
+}
+.tm-card:hover {
   transform: translateY(-3px);
-  border-color: var(--user-accent, #fc8019);
+  border-color: var(--user-accent, var(--accent-primary));
+  box-shadow: 0 12px 28px -6px rgba(0, 0, 0, 0.09);
+}
+
+.tm-skill-pill {
+  background: var(--tp-subtle);
+  border: 1px solid var(--tp-border);
+  border-radius: 10px;
+  padding: 0.55rem 0.95rem;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.65rem;
+  transition: transform 0.18s ease, border-color 0.18s ease, box-shadow 0.18s ease;
+}
+.tm-skill-pill:hover {
+  transform: translateY(-2px);
+  border-color: var(--user-accent, var(--accent-primary));
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.06);
 }
 
 /* Responsive Rules */

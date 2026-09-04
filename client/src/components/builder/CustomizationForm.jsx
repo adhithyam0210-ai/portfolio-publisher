@@ -64,47 +64,14 @@ const TEMPLATES = [
   }
 ];
 
-const SECTIONS = [
-  { id: 'about', label: 'About Me' },
-  { id: 'skills', label: 'Skills & Tech Stack' },
-  { id: 'projects', label: 'Projects & Work' },
-  { id: 'experience', label: 'Career Experience' },
-  { id: 'education', label: 'Education & Degrees' },
-  { id: 'certifications', label: 'Certifications' },
-  { id: 'achievements', label: 'Achievements & Honors' },
-  { id: 'resume', label: 'Resume Download Button' }
-];
-
 export const CustomizationForm = ({ portfolio, onChange }) => {
   const currentTemplate = portfolio.template || 'modern';
   const currentTheme = portfolio.theme || 'dark';
   const currentFont = portfolio.font_family || 'Inter';
   const currentAccent = portfolio.accent_color || '#6366f1';
 
-  let visibility = {};
-  if (portfolio.section_visibility) {
-    if (typeof portfolio.section_visibility === 'string') {
-      try {
-        visibility = JSON.parse(portfolio.section_visibility);
-      } catch (e) {
-        visibility = {};
-      }
-    } else {
-      visibility = portfolio.section_visibility;
-    }
-  }
-
   const handleUpdate = (field, value) => {
     onChange({ ...portfolio, [field]: value });
-  };
-
-  const handleToggleSection = (secId) => {
-    const isCurrentlyVisible = visibility[secId] !== false;
-    const newVisibility = {
-      ...visibility,
-      [secId]: !isCurrentlyVisible
-    };
-    handleUpdate('section_visibility', newVisibility);
   };
 
   return (
@@ -248,43 +215,6 @@ export const CustomizationForm = ({ portfolio, onChange }) => {
                 <div style={{ fontWeight: 700, fontSize: '1rem', marginBottom: '0.2rem' }}>{f.id}</div>
                 <div style={{ fontSize: '0.75rem', opacity: 0.7 }}>{f.sample}</div>
               </div>
-            );
-          })}
-        </div>
-      </div>
-
-      {/* 4. Section Visibility Toggles */}
-      <div>
-        <h3 style={{ fontSize: '1rem', fontWeight: 600, marginBottom: '0.25rem' }}>Section Visibility</h3>
-        <p style={{ fontSize: '0.8rem', color: 'var(--text-muted)', marginBottom: '1rem' }}>
-          Toggle sections on or off without deleting their stored content.
-        </p>
-
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: '0.75rem' }}>
-          {SECTIONS.map((s) => {
-            const isVisible = visibility[s.id] !== false;
-            return (
-              <label
-                key={s.id}
-                style={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'space-between',
-                  padding: '0.75rem 1rem',
-                  background: 'rgba(255, 255, 255, 0.02)',
-                  border: '1px solid var(--border-subtle)',
-                  borderRadius: '8px',
-                  cursor: 'pointer'
-                }}
-              >
-                <span style={{ fontSize: '0.9rem', fontWeight: 500 }}>{s.label}</span>
-                <input
-                  type="checkbox"
-                  checked={isVisible}
-                  onChange={() => handleToggleSection(s.id)}
-                  style={{ width: '18px', height: '18px', accentColor: 'var(--primary)' }}
-                />
-              </label>
             );
           })}
         </div>

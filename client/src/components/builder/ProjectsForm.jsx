@@ -1,10 +1,12 @@
-import React, { useState } from 'react';
-import { Plus, Trash2, Edit2, Code, ExternalLink, Github, Check } from 'lucide-react';
-import { portfolioApi } from '../../services/api';
+import React, { useState, useRef } from 'react';
+import { Plus, Trash2, Edit2, Code, ExternalLink, Github, Check, UploadCloud, Image as ImageIcon, X } from 'lucide-react';
+import { portfolioApi, uploadApi } from '../../services/api';
 import { useToast } from '../../context/ToastContext';
 
 export const ProjectsForm = ({ projects, onListChange }) => {
   const toast = useToast();
+  const fileInputRef = useRef(null);
+  const [uploadingImage, setUploadingImage] = useState(false);
   const [isAdding, setIsAdding] = useState(false);
   const [editingId, setEditingId] = useState(null);
   const [formData, setFormData] = useState({
@@ -45,28 +47,70 @@ export const ProjectsForm = ({ projects, onListChange }) => {
     setIsAdding(true);
   };
 
+  const handleImageFileChange = async (e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    if (!file.type.match(/^image\/(jpeg|jpg|png|webp|gif|svg\+xml)$/i) && !file.name.match(/\.(jpeg|jpg|png|webp|gif|svg)$/i)) {
+      toast.error('Only image files (JPG, PNG, WebP, GIF, SVG) are allowed for project cover.');
+      return;
+    }
+
+    if (file.size > 10 * 1024 * 1024) {
+      toast.error('Image size must be under 10MB.');
+      return;
+    }
+
+    const uploadData = new FormData();
+    uploadData.append('image', file);
+
+    setUploadingImage(true);
+    try {
+      const res = await uploadApi.uploadProjectImage(uploadData);
+      if (res.success && res.image_url) {
+        setFormData((prev) => ({ ...prev, image_url: res.image_url }));
+        toast.success('Project cover image uploaded!');
+      } else {
+        toast.error(res.message || 'Failed to upload cover image.');
+      }
+    } catch (err) {
+      toast.error('Failed to upload image: ' + (err.message || 'Server error'));
+    } finally {
+      setUploadingImage(false);
+      if (fileInputRef.current) fileInputRef.current.value = '';
+    }
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
-    if (!formData.title.trim() || !formData.description.trim()) {
-      toast.error('Project Title and Description are required.');
+    if (!formData.title.trim()) {
+      toast.error('Project Title is mandatory.');
+      return;
+    }
+    if (!formData.description.trim()) {
+      toast.error('Project Description is mandatory.');
       return;
     }
 
     try {
       if (editingId) {
-        await portfolioApi.updateProject(editingId, formData);
-        onListChange(projects.map((p) => (p.id === editingId ? { ...p, ...formData } : p)));
+        const res = await portfolioApi.updateProject(editingId, formData);
+        const updatedItem = res.item || res.project || { id: editingId, ...formData };
+        onListChange(projects.map((p) => (p.id === editingId ? updatedItem : p)));
         toast.success('Project updated!');
       } else {
         const res = await portfolioApi.addProject(formData);
-        if (res.project) {
-          onListChange([res.project, ...projects]);
+        const newItem = res.item || res.project || res.data;
+        if (newItem) {
+          onListChange([newItem, ...projects]);
+        } else {
+          onListChange([{ id: Date.now(), ...formData }, ...projects]);
         }
         toast.success('Project added!');
       }
       resetForm();
     } catch (err) {
-      toast.error('Failed to save project.');
+      toast.error('Failed to save project: ' + (err.message || 'Error'));
     }
   };
 
@@ -151,15 +195,89 @@ export const ProjectsForm = ({ projects, onListChange }) => {
             />
           </div>
 
+          {/* Cover Image Upload from File Explorer */}
           <div className="form-group">
-            <label className="form-label">Project Cover Image URL</label>
+            <label className="form-label" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+              <span>Project Cover Image</span>
+              {uploadingImage && <span style={{ color: 'var(--primary)', fontSize: '0.8rem' }}>Uploading...</span>}
+            </label>
+
             <input
-              type="url"
-              className="form-control"
-              placeholder="https://images.unsplash.com/photo-..."
-              value={formData.image_url}
-              onChange={(e) => setFormData({ ...formData, image_url: e.target.value })}
+              type="file"
+              ref={fileInputRef}
+              onChange={handleImageFileChange}
+              accept="image/png,image/jpeg,image/webp,image/gif,image/svg+xml"
+              style={{ display: 'none' }}
             />
+
+            {formData.image_url ? (
+              <div style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: '1rem',
+                background: 'var(--bg-subtle)',
+                border: '1px solid var(--border-light)',
+                borderRadius: '12px',
+                padding: '0.75rem 1rem'
+              }}>
+                <img
+                  src={formData.image_url}
+                  alt="Project Cover"
+                  style={{ width: '80px', height: '56px', objectFit: 'cover', borderRadius: '8px', border: '1px solid var(--border-light)' }}
+                />
+                <div style={{ flex: 1, minWidth: 0 }}>
+                  <div style={{ fontSize: '0.85rem', fontWeight: 600, color: 'var(--text-main)', textOverflow: 'ellipsis', overflow: 'hidden', whiteSpace: 'nowrap' }}>
+                    Cover image uploaded
+                  </div>
+                  <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>
+                    Saved to portfolio showcase
+                  </div>
+                </div>
+                <div style={{ display: 'flex', gap: '0.5rem' }}>
+                  <button
+                    type="button"
+                    className="btn btn-secondary btn-sm"
+                    onClick={() => fileInputRef.current?.click()}
+                    disabled={uploadingImage}
+                  >
+                    Replace Image
+                  </button>
+                  <button
+                    type="button"
+                    className="btn btn-danger btn-icon-only btn-sm"
+                    onClick={() => setFormData({ ...formData, image_url: '' })}
+                    title="Remove cover image"
+                  >
+                    <X size={15} />
+                  </button>
+                </div>
+              </div>
+            ) : (
+              <div
+                onClick={() => fileInputRef.current?.click()}
+                style={{
+                  border: '2px dashed var(--border-light)',
+                  borderRadius: '12px',
+                  padding: '1.75rem 1.25rem',
+                  textAlign: 'center',
+                  cursor: 'pointer',
+                  background: 'var(--bg-subtle)',
+                  transition: 'border-color 0.2s ease, background 0.2s ease'
+                }}
+                onMouseOver={(e) => { e.currentTarget.style.borderColor = 'var(--primary)'; e.currentTarget.style.background = 'rgba(99, 102, 241, 0.04)'; }}
+                onMouseOut={(e) => { e.currentTarget.style.borderColor = 'var(--border-light)'; e.currentTarget.style.background = 'var(--bg-subtle)'; }}
+              >
+                <div style={{ width: '42px', height: '42px', borderRadius: '50%', background: 'rgba(99, 102, 241, 0.12)', color: 'var(--primary)', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 0.6rem' }}>
+                  <UploadCloud size={20} />
+                </div>
+                <div style={{ fontWeight: 600, fontSize: '0.9rem', color: 'var(--text-main)', marginBottom: '0.2rem' }}>
+                  Upload Project Cover from File Explorer
+                </div>
+                <div style={{ fontSize: '0.78rem', color: 'var(--text-muted)' }}>
+                  Click to browse JPG, PNG, WebP, or SVG (Up to 10MB)
+                </div>
+              </div>
+            )}
           </div>
 
           <div className="form-row">

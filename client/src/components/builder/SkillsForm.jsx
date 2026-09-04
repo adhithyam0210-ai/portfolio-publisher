@@ -35,13 +35,12 @@ export const SkillsForm = ({ skills, onListChange }) => {
         category
       });
 
-      if (res.skill) {
-        onListChange([...skills, res.skill]);
-      }
+      const newSkill = res.item || res.skill || res.data || { id: Date.now(), skill_name: finalName, proficiency: profToAdd, category };
+      onListChange([...skills, newSkill]);
       setSkillName('');
       toast.success(`Added "${finalName}"`);
     } catch (err) {
-      toast.error('Failed to add skill.');
+      toast.error('Failed to add skill: ' + (err.message || 'Error'));
     }
   };
 

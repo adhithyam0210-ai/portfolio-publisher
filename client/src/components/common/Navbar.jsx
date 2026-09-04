@@ -17,6 +17,7 @@ export const Navbar = ({ activeTab, onNavigate }) => {
   const { user, isAdmin, logout } = useAuth();
   const [theme, setTheme] = useState(localStorage.getItem('portfoliocraft_theme') || 'dark');
   const [isScrolled, setIsScrolled] = useState(false);
+  const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
 
   useEffect(() => {
     document.documentElement.setAttribute('data-theme', theme);
@@ -139,7 +140,7 @@ export const Navbar = ({ activeTab, onNavigate }) => {
                 </div>
                 <button
                   className="btn btn-secondary btn-icon-only btn-sm"
-                  onClick={logout}
+                  onClick={() => setShowLogoutConfirm(true)}
                   title="Sign Out"
                 >
                   <LogOut size={14} />
@@ -174,6 +175,86 @@ export const Navbar = ({ activeTab, onNavigate }) => {
           )}
         </div>
       </div>
+
+      {/* Sign Out Confirmation Verification Modal */}
+      {showLogoutConfirm && (
+        <div style={{
+          position: 'fixed',
+          top: 0,
+          left: 0,
+          right: 0,
+          bottom: 0,
+          background: 'rgba(0, 0, 0, 0.65)',
+          backdropFilter: 'blur(6px)',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          zIndex: 9999,
+          padding: '1rem'
+        }}>
+          <div style={{
+            background: 'var(--bg-card)',
+            border: '1px solid var(--border-light)',
+            borderRadius: '20px',
+            padding: '2rem',
+            maxWidth: '420px',
+            width: '100%',
+            boxShadow: '0 20px 40px rgba(0,0,0,0.3)',
+            textAlign: 'center',
+            animation: 'modalSlideUp 0.2s cubic-bezier(0.16, 1, 0.3, 1)'
+          }}>
+            <div style={{
+              width: '54px',
+              height: '54px',
+              borderRadius: '50%',
+              background: 'rgba(239, 68, 68, 0.1)',
+              color: '#ef4444',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              margin: '0 auto 1.25rem'
+            }}>
+              <LogOut size={26} />
+            </div>
+
+            <h3 style={{ fontSize: '1.25rem', fontWeight: 800, color: 'var(--text-main)', marginBottom: '0.5rem' }}>
+              Confirm Sign Out
+            </h3>
+            <p style={{ fontSize: '0.9rem', color: 'var(--text-secondary)', marginBottom: '1.75rem', lineHeight: 1.5 }}>
+              Are you sure you want to sign out of your account? You will need to sign back in to access your portfolio builder and settings.
+            </p>
+
+            <div style={{ display: 'flex', gap: '0.75rem', justifyContent: 'center' }}>
+              <button
+                type="button"
+                className="btn btn-secondary"
+                onClick={() => setShowLogoutConfirm(false)}
+                style={{ flex: 1, padding: '0.65rem 1.25rem', borderRadius: '12px' }}
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                className="btn btn-danger"
+                onClick={() => {
+                  setShowLogoutConfirm(false);
+                  logout();
+                }}
+                style={{
+                  flex: 1,
+                  padding: '0.65rem 1.25rem',
+                  borderRadius: '12px',
+                  background: '#dc2626',
+                  borderColor: '#dc2626',
+                  color: '#ffffff'
+                }}
+              >
+                Sign Out
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </nav>
   );
 };

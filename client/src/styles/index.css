@@ -16,11 +16,11 @@
   --text-muted: #8b8e99;
   --text-inverse: #ffffff;
 
-  --accent-primary: #fc8019;       /* Swiggy Orange */
-  --accent-primary-hover: #e26a05;
-  --accent-secondary: #e23744;     /* Zomato Red */
-  --accent-tag-bg: #fff3ea;
-  --accent-tag-text: #e26a05;
+  --accent-primary: #059669;       /* Fresh, light, suitable Emerald Green for light theme */
+  --accent-primary-hover: #047857;
+  --accent-secondary: #10b981;
+  --accent-tag-bg: #ecfdf5;
+  --accent-tag-text: #065f46;
 
   --border-light: #e6e8ee;
   --border-medium: #d1d4dc;
@@ -55,10 +55,11 @@
   --text-muted: #6b7080;
   --text-inverse: #101115;
 
-  --accent-primary: #fc8019;
-  --accent-primary-hover: #ff9133;
-  --accent-tag-bg: rgba(252, 128, 25, 0.12);
-  --accent-tag-text: #fc8019;
+  --accent-primary: #2d6a4f;
+  --accent-primary-hover: #1b4332;
+  --accent-secondary: #34d399;
+  --accent-tag-bg: rgba(45, 106, 79, 0.2);
+  --accent-tag-text: #34d399;
 
   --border-light: #282a34;
   --border-medium: #393d4b;
@@ -672,7 +673,7 @@ input, textarea, select {
   font-weight: 700;
   color: var(--accent-primary);
   background: var(--accent-tag-bg);
-  border: 1px solid rgba(252, 128, 25, 0.2);
+  border: 1px solid rgba(27, 67, 50, 0.2);
   padding: 2px 8px;
   border-radius: var(--radius-full);
 }
@@ -871,14 +872,14 @@ input, textarea, select {
   background: var(--accent-primary);
   color: #ffffff;
   border-color: var(--accent-primary);
-  box-shadow: 0 2px 8px rgba(252, 128, 25, 0.25);
+  box-shadow: 0 2px 8px rgba(27, 67, 50, 0.2);
 }
 .btn-primary:hover {
   background: var(--accent-primary-hover);
   border-color: var(--accent-primary-hover);
   color: #ffffff;
   transform: translateY(-1px);
-  box-shadow: 0 4px 14px rgba(252, 128, 25, 0.35);
+  box-shadow: 0 4px 14px rgba(27, 67, 50, 0.28);
 }
 .btn-secondary {
   background: var(--bg-subtle);
@@ -945,7 +946,7 @@ input, textarea, select {
 .badge-accent {
   background: var(--accent-tag-bg);
   color: var(--accent-tag-text);
-  border: 1px solid rgba(252, 128, 25, 0.25);
+  border: 1px solid rgba(27, 67, 50, 0.2);
 }
 
 /* Form utilities */
@@ -978,7 +979,7 @@ input, textarea, select {
   text-align: center;
   position: relative;
   overflow: hidden;
-  background: radial-gradient(circle at 50% 10%, rgba(252, 128, 25, 0.08) 0%, transparent 60%);
+  background: radial-gradient(circle at 50% 10%, rgba(27, 67, 50, 0.08) 0%, transparent 60%);
 }
 
 .landing-pill-tag {
@@ -1331,8 +1332,8 @@ input, textarea, select {
 
 /* Call to Action Banner */
 .landing-cta-banner {
-  background: linear-gradient(135deg, rgba(252, 128, 25, 0.12) 0%, rgba(226, 55, 68, 0.08) 100%);
-  border: 1px solid rgba(252, 128, 25, 0.25);
+  background: linear-gradient(135deg, rgba(27, 67, 50, 0.1) 0%, rgba(45, 106, 79, 0.06) 100%);
+  border: 1px solid rgba(27, 67, 50, 0.2);
   border-radius: 20px;
   padding: 3.5rem 2rem;
   text-align: center;
@@ -1529,7 +1530,7 @@ input, textarea, select {
 
 .stat-metric-card:hover {
   transform: translateY(-2px);
-  border-color: var(--accent-primary);
+  box-shadow: var(--shadow-card);
 }
 
 .stat-icon-wrapper {
@@ -1569,14 +1570,18 @@ input, textarea, select {
 .builder-split-workspace {
   display: flex;
   flex: 1;
+  min-height: 0;
+  height: 100%;
   overflow: hidden;
   position: relative;
 }
 
 .builder-form-pane {
-  width: 500px;
+  width: 480px;
   min-width: 360px;
-  max-width: 540px;
+  max-width: 520px;
+  height: 100%;
+  min-height: 0;
   border-right: 1px solid var(--border-light);
   display: flex;
   flex-direction: column;
@@ -1587,6 +1592,7 @@ input, textarea, select {
 .builder-tabs-track {
   display: flex;
   overflow-x: auto;
+  flex-shrink: 0;
   border-bottom: 1px solid var(--border-light);
   background: var(--bg-subtle);
   padding: 0.5rem 0.75rem;
@@ -1614,7 +1620,7 @@ input, textarea, select {
 .builder-tab-btn.active {
   background: var(--accent-primary);
   color: #ffffff;
-  box-shadow: 0 2px 6px rgba(252, 128, 25, 0.25);
+  box-shadow: 0 2px 6px rgba(27, 67, 50, 0.25);
 }
 
 .builder-tab-btn:not(.active) {
@@ -1629,6 +1635,7 @@ input, textarea, select {
 
 .builder-form-body {
   flex: 1;
+  min-height: 0;
   overflow-y: auto;
   padding: 1.75rem 1.5rem;
   background: var(--bg-card);
@@ -1636,19 +1643,41 @@ input, textarea, select {
 
 .builder-preview-pane {
   flex: 1;
+  height: 100%;
+  min-height: 0;
+  min-width: 0;
   background: var(--bg-page);
   overflow-y: auto;
+  overflow-x: hidden;
   display: flex;
   flex-direction: column;
   align-items: stretch;
   position: relative;
+  scroll-behavior: smooth;
+}
+
+.builder-preview-pane::-webkit-scrollbar,
+.builder-form-body::-webkit-scrollbar {
+  width: 8px;
+}
+.builder-preview-pane::-webkit-scrollbar-track,
+.builder-form-body::-webkit-scrollbar-track {
+  background: var(--bg-subtle);
+}
+.builder-preview-pane::-webkit-scrollbar-thumb,
+.builder-form-body::-webkit-scrollbar-thumb {
+  background: var(--border-medium);
+  border-radius: 4px;
+}
+.builder-preview-pane::-webkit-scrollbar-thumb:hover,
+.builder-form-body::-webkit-scrollbar-thumb:hover {
+  background: var(--text-muted);
 }
 
 .builder-preview-card-wrap {
   width: 100%;
   min-height: 100%;
   background: var(--bg-card);
-  overflow: hidden;
   box-shadow: var(--shadow-sm);
 }
 

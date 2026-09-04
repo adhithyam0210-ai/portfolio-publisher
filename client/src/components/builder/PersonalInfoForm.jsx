@@ -3,6 +3,14 @@ import { Camera, Mail, Phone, MapPin, Globe, Linkedin, Github, Twitter } from 'l
 import { uploadApi } from '../../services/api';
 import { useToast } from '../../context/ToastContext';
 
+const STATUS_PRESETS = [
+  'Available for Opportunities',
+  'Open to Work',
+  'Actively Freelancing',
+  'Open to Collaboration',
+  'Currently Employed'
+];
+
 export const PersonalInfoForm = ({ profile, onChange, onProfilePhotoUpdated }) => {
   const toast = useToast();
   const fileInputRef = useRef(null);
@@ -126,6 +134,122 @@ export const PersonalInfoForm = ({ profile, onChange, onProfilePhotoUpdated }) =
             onChange={(e) => handleFieldChange('professional_title', e.target.value)}
           />
         </div>
+      </div>
+
+      {/* Work Availability Badge Customization */}
+      <div style={{
+        background: 'var(--bg-card)',
+        border: '1px solid var(--border-light)',
+        borderRadius: '12px',
+        padding: '1.25rem',
+        boxShadow: '0 2px 8px rgba(0,0,0,0.02)'
+      }}>
+        <div style={{
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'space-between',
+          gap: '1rem',
+          marginBottom: (profile.show_availability_badge !== false && profile.show_availability_badge !== 0) ? '1rem' : '0'
+        }}>
+          <div style={{ flex: 1, minWidth: 0 }}>
+            <div style={{ fontWeight: 700, fontSize: '0.95rem', color: 'var(--text-main)', marginBottom: '0.15rem' }}>
+              Work Availability Badge
+            </div>
+            <div style={{ fontSize: '0.8rem', color: 'var(--text-muted)', lineHeight: 1.4 }}>
+              Highlight your current work status at the top of your portfolio hero.
+            </div>
+          </div>
+
+          {/* Sleek, UI-Friendly Toggle Switch with Proper Alignment */}
+          <div
+            onClick={() => {
+              const current = profile.show_availability_badge !== false && profile.show_availability_badge !== 0;
+              handleFieldChange('show_availability_badge', current ? 0 : 1);
+            }}
+            style={{
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: '0.6rem',
+              cursor: 'pointer',
+              userSelect: 'none',
+              flexShrink: 0,
+              padding: '0.35rem 0.75rem',
+              borderRadius: '20px',
+              background: (profile.show_availability_badge !== false && profile.show_availability_badge !== 0)
+                ? 'var(--accent-tag-bg, rgba(5, 150, 105, 0.1))'
+                : 'var(--bg-subtle)',
+              border: `1px solid ${(profile.show_availability_badge !== false && profile.show_availability_badge !== 0) ? 'var(--accent-primary, #059669)' : 'var(--border-medium)'}`,
+              transition: 'all 0.2s ease'
+            }}
+          >
+            <span style={{
+              fontSize: '0.825rem',
+              fontWeight: 600,
+              whiteSpace: 'nowrap',
+              color: (profile.show_availability_badge !== false && profile.show_availability_badge !== 0)
+                ? 'var(--accent-primary, #059669)'
+                : 'var(--text-secondary)'
+            }}>
+              Show Badge
+            </span>
+
+            <div style={{
+              width: '36px',
+              height: '20px',
+              borderRadius: '10px',
+              background: (profile.show_availability_badge !== false && profile.show_availability_badge !== 0)
+                ? 'var(--accent-primary, #059669)'
+                : 'var(--border-medium, #94a3b8)',
+              position: 'relative',
+              transition: 'background-color 0.2s ease',
+              flexShrink: 0
+            }}>
+              <div style={{
+                width: '16px',
+                height: '16px',
+                borderRadius: '50%',
+                background: '#ffffff',
+                boxShadow: '0 1px 3px rgba(0,0,0,0.25)',
+                position: 'absolute',
+                top: '2px',
+                left: (profile.show_availability_badge !== false && profile.show_availability_badge !== 0) ? '18px' : '2px',
+                transition: 'left 0.2s ease'
+              }} />
+            </div>
+          </div>
+        </div>
+
+        {(profile.show_availability_badge !== false && profile.show_availability_badge !== 0) && (
+          <div>
+            <div className="form-group" style={{ marginBottom: '0.75rem' }}>
+              <input
+                type="text"
+                className="form-control"
+                placeholder="e.g. Available for Opportunities"
+                value={profile.availability_status ?? 'Available for Opportunities'}
+                onChange={(e) => handleFieldChange('availability_status', e.target.value)}
+              />
+            </div>
+
+            <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.45rem', alignItems: 'center' }}>
+              <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)', fontWeight: 600 }}>Quick Presets:</span>
+              {STATUS_PRESETS.map((preset) => {
+                const isSelected = (profile.availability_status ?? 'Available for Opportunities') === preset;
+                return (
+                  <button
+                    key={preset}
+                    type="button"
+                    onClick={() => handleFieldChange('availability_status', preset)}
+                    className={`btn btn-sm ${isSelected ? 'btn-primary' : 'btn-secondary'}`}
+                    style={{ fontSize: '0.75rem', padding: '0.2rem 0.55rem', borderRadius: '6px' }}
+                  >
+                    {preset}
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+        )}
       </div>
 
       <div className="form-group">

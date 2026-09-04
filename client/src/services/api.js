@@ -46,6 +46,7 @@ export const apiRequest = async (endpoint, options = {}) => {
 export const authApi = {
   register: (payload) => apiRequest('/auth/register', { method: 'POST', body: JSON.stringify(payload) }),
   login: (payload) => apiRequest('/auth/login', { method: 'POST', body: JSON.stringify(payload) }),
+  googleAuth: (payload) => apiRequest('/auth/google', { method: 'POST', body: JSON.stringify(payload) }),
   getMe: () => apiRequest('/auth/me'),
   forgotPassword: (email) => apiRequest('/auth/forgot-password', { method: 'POST', body: JSON.stringify({ email }) }),
   resetPassword: (payload) => apiRequest('/auth/reset-password', { method: 'POST', body: JSON.stringify(payload) }),
@@ -104,6 +105,8 @@ export const publicApi = {
 // File Uploads API
 export const uploadApi = {
   uploadAvatar: (formData) => apiRequest('/upload/avatar', { method: 'POST', body: formData }),
+  uploadProjectImage: (formData) => apiRequest('/upload/project-image', { method: 'POST', body: formData }),
+  uploadCertificate: (formData) => apiRequest('/upload/certificate', { method: 'POST', body: formData }),
   uploadResume: (formData) => apiRequest('/upload/resume', { method: 'POST', body: formData }),
   deleteResume: () => apiRequest('/upload/resume', { method: 'DELETE' }),
 };

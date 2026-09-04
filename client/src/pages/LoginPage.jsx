@@ -1,31 +1,69 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { useToast } from '../context/ToastContext';
-import { LogIn, Shield, User, ArrowLeft, Sparkles, KeyRound } from 'lucide-react';
+import { Eye, EyeOff, ArrowLeft, Check, X } from 'lucide-react';
 
 export const LoginPage = ({ onNavigate }) => {
-  const { user, login } = useAuth();
+  const { user, login, loginWithGoogle, logout } = useAuth();
   const toast = useToast();
 
   const [identifier, setIdentifier] = useState('');
   const [password, setPassword] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
+  const [rememberMe, setRememberMe] = useState(false);
   const [submitting, setSubmitting] = useState(false);
 
-  // Notice: Auto-redirect removed so clicking Login always prompts for credentials.
-  const { logout } = useAuth();
+  // Inline error state
+  const [errors, setErrors] = useState({ identifier: '', password: '' });
+  const [isGoogleModalOpen, setIsGoogleModalOpen] = useState(false);
+  const [customGoogleEmail, setCustomGoogleEmail] = useState('');
+
+  const validateField = (field, value) => {
+    let err = '';
+    if (field === 'identifier') {
+      const clean = value.trim();
+      if (!clean) {
+        err = 'E-mail or username is required.';
+      } else if (clean.includes('@')) {
+        const emailRegex = /^[^\s@]+@[^\s@]+\.[a-zA-Z]{2,}$/;
+        if (!emailRegex.test(clean)) {
+          err = 'Please enter a valid email address (e.g. name@gmail.com).';
+        }
+      }
+    } else if (field === 'password') {
+      if (!value) {
+        err = 'Password is required.';
+      }
+    }
+    setErrors((prev) => ({ ...prev, [field]: err }));
+    return err;
+  };
+
+  const handleIdentifierChange = (e) => {
+    const val = e.target.value;
+    setIdentifier(val);
+    if (errors.identifier) validateField('identifier', val);
+  };
+
+  const handlePasswordChange = (e) => {
+    const val = e.target.value;
+    setPassword(val);
+    if (errors.password) validateField('password', val);
+  };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    if (!identifier.trim() || !password) {
-      toast.error('Please enter your email/username and password.');
+
+    const errId = validateField('identifier', identifier);
+    const errPass = validateField('password', password);
+
+    if (errId || errPass) {
       return;
     }
 
     setSubmitting(true);
     try {
       const loggedUser = await login(identifier.trim(), password);
-      
-      // Role-based redirection after authentication
       if (loggedUser.role === 'ADMIN') {
         toast.success(`Welcome to Admin Governance, ${loggedUser.username}!`);
         onNavigate('admin');
@@ -34,37 +72,47 @@ export const LoginPage = ({ onNavigate }) => {
         onNavigate('dashboard');
       }
     } catch (err) {
-      toast.error(err.message || 'Invalid credentials. Please try again.');
+      setErrors((prev) => ({ ...prev, password: err.message || 'Invalid credentials. Please check your details.' }));
+      toast.error(err.message || 'Invalid credentials. Please check your details.');
     } finally {
       setSubmitting(false);
     }
   };
 
-  // Quick 1-click demo login helper
-  const handleQuickLogin = async (demoIdentifier, demoPassword) => {
-    setIdentifier(demoIdentifier);
-    setPassword(demoPassword);
+  const executeGoogleAuth = async (email, name) => {
     setSubmitting(true);
     try {
-      const loggedUser = await login(demoIdentifier, demoPassword);
+      const loggedUser = await loginWithGoogle({
+        email,
+        name,
+        picture: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150&auto=format&fit=crop&q=80'
+      });
+      setIsGoogleModalOpen(false);
+      toast.success(`Signed in with Google as ${loggedUser.email}!`);
       if (loggedUser.role === 'ADMIN') {
-        toast.success(`Signed in as Administrator: ${loggedUser.username}`);
         onNavigate('admin');
       } else {
-        toast.success(`Signed in as User: ${loggedUser.username}`);
         onNavigate('dashboard');
       }
     } catch (err) {
-      toast.error(err.message || 'Demo login failed.');
+      toast.error(err.message || 'Google authentication failed.');
     } finally {
       setSubmitting(false);
     }
   };
 
   return (
-    <div className="container-narrow" style={{ padding: '3.5rem 1.5rem', display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+    <div style={{
+      minHeight: '88vh',
+      display: 'flex',
+      flexDirection: 'column',
+      alignItems: 'center',
+      justifyContent: 'center',
+      padding: '2.5rem 1.5rem'
+    }}>
       {/* Back to Home Link */}
       <button
+        type="button"
         onClick={() => onNavigate('home')}
         style={{
           background: 'transparent',
@@ -77,8 +125,9 @@ export const LoginPage = ({ onNavigate }) => {
           fontSize: '0.85rem',
           fontWeight: 600,
           marginBottom: '1.25rem',
-          alignSelf: 'flex-start',
-          transition: 'color var(--transition-fast)'
+          width: '100%',
+          maxWidth: '430px',
+          transition: 'color 0.15s ease'
         }}
         onMouseEnter={(e) => (e.currentTarget.style.color = 'var(--accent-primary)')}
         onMouseLeave={(e) => (e.currentTarget.style.color = 'var(--text-secondary)')}
@@ -87,32 +136,45 @@ export const LoginPage = ({ onNavigate }) => {
         <span>Back to Landing Page</span>
       </button>
 
-      <div className="glass-card" style={{ width: '100%', maxWidth: '460px', padding: '2.5rem 2rem' }}>
-        {/* Header Icon & Title */}
-        <div style={{ textAlign: 'center', marginBottom: '2rem' }}>
-          <div
+      {/* Main Card */}
+      <div style={{
+        width: '100%',
+        maxWidth: '430px',
+        background: 'var(--bg-card)',
+        border: '1px solid var(--border-light)',
+        borderRadius: '20px',
+        padding: '2.75rem 2.25rem',
+        boxShadow: 'var(--shadow-card)'
+      }}>
+        {/* Title & Subtitle */}
+        <h1 style={{
+          fontSize: '2.1rem',
+          fontWeight: 800,
+          color: 'var(--text-main)',
+          marginBottom: '0.35rem',
+          letterSpacing: '-0.025em'
+        }}>
+          Sign in
+        </h1>
+
+        <p style={{ fontSize: '0.88rem', color: 'var(--text-secondary)', marginBottom: '1.75rem' }}>
+          Don't have an account?{' '}
+          <button
+            type="button"
+            onClick={() => onNavigate('register')}
             style={{
-              width: '50px',
-              height: '50px',
-              borderRadius: '12px',
-              background: 'var(--accent-tag-bg)',
+              background: 'transparent',
+              border: 'none',
               color: 'var(--accent-primary)',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              margin: '0 auto 1rem',
-              boxShadow: 'var(--shadow-sm)'
+              fontWeight: 700,
+              textDecoration: 'underline',
+              cursor: 'pointer',
+              padding: 0
             }}
           >
-            <LogIn size={24} />
-          </div>
-          <h2 style={{ fontSize: '1.75rem', fontWeight: 800, color: 'var(--text-main)', marginBottom: '0.35rem', letterSpacing: '-0.02em' }}>
-            Sign In to PortfolioCraft
-          </h2>
-          <p style={{ color: 'var(--text-secondary)', fontSize: '0.875rem' }}>
-            Single unified sign-in for users and administrators. You will be redirected to your dashboard automatically.
-          </p>
-        </div>
+            Create now
+          </button>
+        </p>
 
         {/* Active Session Notice if already signed in */}
         {user && (
@@ -120,33 +182,31 @@ export const LoginPage = ({ onNavigate }) => {
             background: 'var(--bg-subtle)',
             border: '1px solid var(--border-light)',
             borderRadius: '12px',
-            padding: '0.85rem 1rem',
+            padding: '0.75rem 1rem',
             marginBottom: '1.5rem',
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'space-between',
-            gap: '0.75rem',
-            fontSize: '0.84rem'
+            fontSize: '0.82rem'
           }}>
             <div>
-              <span style={{ color: 'var(--text-secondary)' }}>Active session: </span>
-              <strong style={{ color: 'var(--text-main)' }}>{user.username}</strong>{' '}
-              <span className="badge badge-accent" style={{ fontSize: '0.65rem' }}>{user.role}</span>
+              <span style={{ color: 'var(--text-secondary)' }}>Active: </span>
+              <strong style={{ color: 'var(--text-main)' }}>{user.username}</strong>
             </div>
             <div style={{ display: 'flex', gap: '0.4rem' }}>
               <button
                 type="button"
                 onClick={() => onNavigate(user.role === 'ADMIN' ? 'admin' : 'dashboard')}
                 className="btn btn-secondary btn-sm"
-                style={{ padding: '0.25rem 0.6rem', fontSize: '0.75rem' }}
+                style={{ padding: '0.2rem 0.55rem', fontSize: '0.74rem' }}
               >
-                Go to Dashboard
+                Dashboard
               </button>
               <button
                 type="button"
-                onClick={() => { logout(); toast.info('Signed out. Enter credentials to sign in.'); }}
+                onClick={() => { logout(); toast.info('Signed out.'); }}
                 className="btn btn-outline btn-sm"
-                style={{ padding: '0.25rem 0.6rem', fontSize: '0.75rem' }}
+                style={{ padding: '0.2rem 0.55rem', fontSize: '0.74rem' }}
               >
                 Sign Out
               </button>
@@ -154,111 +214,343 @@ export const LoginPage = ({ onNavigate }) => {
           </div>
         )}
 
-        {/* Unified Login Form */}
-        <form onSubmit={handleSubmit}>
-          <div className="form-group">
-            <label className="form-label">Email or Username</label>
+        {/* Login Form */}
+        <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
+          <div>
+            <label style={{ display: 'block', fontSize: '0.84rem', fontWeight: 600, color: 'var(--text-secondary)', marginBottom: '0.4rem' }}>
+              E-mail
+            </label>
             <input
               type="text"
-              className="form-control"
-              placeholder="e.g. john@example.com or admin"
               value={identifier}
-              onChange={(e) => setIdentifier(e.target.value)}
+              onChange={handleIdentifierChange}
+              onBlur={() => validateField('identifier', identifier)}
+              style={{
+                width: '100%',
+                padding: '0.8rem 1rem',
+                borderRadius: '10px',
+                border: `1.5px solid ${errors.identifier ? '#ef4444' : 'var(--border-medium)'}`,
+                background: 'var(--bg-surface)',
+                color: 'var(--text-main)',
+                fontSize: '0.92rem',
+                outline: 'none',
+                transition: 'all 0.15s ease'
+              }}
+              onFocus={(e) => {
+                e.target.style.borderColor = errors.identifier ? '#ef4444' : 'var(--accent-primary)';
+                e.target.style.boxShadow = errors.identifier ? '0 0 0 3px rgba(239, 68, 68, 0.15)' : '0 0 0 3px rgba(5, 150, 105, 0.15)';
+              }}
               autoComplete="username"
-              required
             />
+            {errors.identifier && (
+              <div style={{ color: '#ef4444', fontSize: '0.78rem', marginTop: '0.35rem', fontWeight: 500, display: 'flex', alignItems: 'center', gap: '0.3rem' }}>
+                <span>⚠️</span>
+                <span>{errors.identifier}</span>
+              </div>
+            )}
           </div>
 
-          <div className="form-group">
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-              <label className="form-label">Password</label>
+          <div>
+            <label style={{ display: 'block', fontSize: '0.84rem', fontWeight: 600, color: 'var(--text-secondary)', marginBottom: '0.4rem' }}>
+              Password
+            </label>
+            <div style={{ position: 'relative' }}>
+              <input
+                type={showPassword ? 'text' : 'password'}
+                value={password}
+                onChange={handlePasswordChange}
+                onBlur={() => validateField('password', password)}
+                style={{
+                  width: '100%',
+                  padding: '0.8rem 2.8rem 0.8rem 1rem',
+                  borderRadius: '10px',
+                  border: `1.5px solid ${errors.password ? '#ef4444' : 'var(--border-medium)'}`,
+                  background: 'var(--bg-surface)',
+                  color: 'var(--text-main)',
+                  fontSize: '0.92rem',
+                  outline: 'none',
+                  transition: 'all 0.15s ease'
+                }}
+                onFocus={(e) => {
+                  e.target.style.borderColor = errors.password ? '#ef4444' : 'var(--accent-primary)';
+                  e.target.style.boxShadow = errors.password ? '0 0 0 3px rgba(239, 68, 68, 0.15)' : '0 0 0 3px rgba(5, 150, 105, 0.15)';
+                }}
+                autoComplete="current-password"
+              />
               <button
                 type="button"
-                onClick={() => onNavigate('forgot-password')}
-                style={{ background: 'transparent', border: 'none', color: 'var(--accent-primary)', fontSize: '0.8rem', cursor: 'pointer', fontWeight: 600 }}
+                onClick={() => setShowPassword(!showPassword)}
+                style={{
+                  position: 'absolute',
+                  right: '12px',
+                  top: '50%',
+                  transform: 'translateY(-50%)',
+                  background: 'transparent',
+                  border: 'none',
+                  color: 'var(--text-muted)',
+                  cursor: 'pointer',
+                  padding: '4px',
+                  display: 'flex',
+                  alignItems: 'center'
+                }}
+                title={showPassword ? 'Hide password' : 'Show password'}
               >
-                Forgot password?
+                {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
               </button>
             </div>
-            <input
-              type="password"
-              className="form-control"
-              placeholder="••••••••"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              autoComplete="current-password"
-              required
-            />
+            {errors.password && (
+              <div style={{ color: '#ef4444', fontSize: '0.78rem', marginTop: '0.35rem', fontWeight: 500, display: 'flex', alignItems: 'center', gap: '0.3rem' }}>
+                <span>⚠️</span>
+                <span>{errors.password}</span>
+              </div>
+            )}
           </div>
 
+          {/* Remember Me & Forgot Password Row */}
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', fontSize: '0.84rem' }}>
+            <label style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', cursor: 'pointer', color: 'var(--text-secondary)' }}>
+              <input
+                type="checkbox"
+                checked={rememberMe}
+                onChange={(e) => setRememberMe(e.target.checked)}
+                style={{ accentColor: 'var(--accent-primary)', cursor: 'pointer', width: '16px', height: '16px' }}
+              />
+              <span>Remember me</span>
+            </label>
+
+            <button
+              type="button"
+              onClick={() => onNavigate('forgot-password')}
+              style={{
+                background: 'transparent',
+                border: 'none',
+                color: 'var(--accent-primary)',
+                fontWeight: 600,
+                cursor: 'pointer',
+                fontSize: '0.84rem',
+                padding: 0
+              }}
+            >
+              Forgot Password?
+            </button>
+          </div>
+
+          {/* Pill Sign In Button */}
           <button
             type="submit"
-            className="btn btn-primary btn-lg"
-            style={{ width: '100%', marginTop: '0.75rem' }}
             disabled={submitting}
+            style={{
+              background: 'var(--accent-primary)',
+              color: '#ffffff',
+              border: 'none',
+              borderRadius: '9999px',
+              padding: '0.85rem',
+              fontWeight: 700,
+              fontSize: '0.98rem',
+              cursor: submitting ? 'not-allowed' : 'pointer',
+              width: '100%',
+              marginTop: '0.25rem',
+              boxShadow: '0 4px 14px rgba(5, 150, 105, 0.25)',
+              transition: 'background 0.15s ease, transform 0.15s ease'
+            }}
+            onMouseEnter={(e) => { if (!submitting) e.currentTarget.style.background = 'var(--accent-primary-hover)'; }}
+            onMouseLeave={(e) => { if (!submitting) e.currentTarget.style.background = 'var(--accent-primary)'; }}
           >
-            <LogIn size={18} />
-            <span>{submitting ? 'Authenticating...' : 'Sign In'}</span>
+            {submitting ? 'Signing in...' : 'Sign in'}
           </button>
         </form>
 
-        {/* Don't have an account */}
-        <div style={{ textAlign: 'center', marginTop: '1.25rem', fontSize: '0.875rem', color: 'var(--text-secondary)' }}>
-          Don't have an account?{' '}
-          <button
-            type="button"
-            onClick={() => onNavigate('register')}
-            style={{ background: 'transparent', border: 'none', color: 'var(--accent-primary)', fontWeight: 700, cursor: 'pointer' }}
-          >
-            Create an Account
-          </button>
+        {/* OR Divider */}
+        <div style={{ display: 'flex', alignItems: 'center', margin: '1.75rem 0', gap: '1rem' }}>
+          <div style={{ flex: 1, height: '1px', background: 'var(--border-light)' }} />
+          <span style={{ fontSize: '0.78rem', color: 'var(--text-muted)', fontWeight: 600, textTransform: 'uppercase' }}>
+            OR
+          </span>
+          <div style={{ flex: 1, height: '1px', background: 'var(--border-light)' }} />
         </div>
 
-        {/* Pre-Seeded Fast Demo Login Section */}
-        <div style={{ marginTop: '2rem', borderTop: '1px solid var(--border-light)', paddingTop: '1.5rem' }}>
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '0.85rem' }}>
-            <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.05em' }}>
-              Instant 1-Click Demo Accounts
-            </span>
-            <span className="badge badge-accent" style={{ fontSize: '0.7rem' }}>
-              Auto-Routing
-            </span>
-          </div>
-
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '0.65rem' }}>
-            {/* Demo User */}
-            <button
-              type="button"
-              className="btn btn-secondary btn-md"
-              style={{ width: '100%', justifyContent: 'space-between', fontSize: '0.85rem' }}
-              onClick={() => handleQuickLogin('john@example.com', 'UserPassword@123')}
-              disabled={submitting}
-            >
-              <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                <User size={15} color="var(--accent-primary)" />
-                <span style={{ fontWeight: 600 }}>Demo User (John Doe)</span>
-              </div>
-              <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>→ User Dashboard</span>
-            </button>
-
-            {/* Demo Admin */}
-            <button
-              type="button"
-              className="btn btn-secondary btn-md"
-              style={{ width: '100%', justifyContent: 'space-between', fontSize: '0.85rem' }}
-              onClick={() => handleQuickLogin('admin@platform.com', 'AdminPassword@123')}
-              disabled={submitting}
-            >
-              <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                <Shield size={15} color="#ef4444" />
-                <span style={{ fontWeight: 600 }}>Demo Admin (Platform Admin)</span>
-              </div>
-              <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>→ Admin Portal</span>
-            </button>
-          </div>
-        </div>
-
+        {/* Continue with Google Pill Button */}
+        <button
+          type="button"
+          onClick={() => setIsGoogleModalOpen(true)}
+          style={{
+            width: '100%',
+            background: 'var(--bg-surface)',
+            border: '1.5px solid var(--border-medium)',
+            borderRadius: '9999px',
+            padding: '0.75rem',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            gap: '0.75rem',
+            cursor: 'pointer',
+            fontSize: '0.92rem',
+            fontWeight: 600,
+            color: 'var(--text-main)',
+            transition: 'border-color 0.15s ease, background 0.15s ease'
+          }}
+          onMouseEnter={(e) => { e.currentTarget.style.borderColor = '#94a3b8'; e.currentTarget.style.background = 'var(--bg-subtle)'; }}
+          onMouseLeave={(e) => { e.currentTarget.style.borderColor = 'var(--border-medium)'; e.currentTarget.style.background = 'var(--bg-surface)'; }}
+        >
+          {/* Multi-colored Google G Icon */}
+          <svg width="18" height="18" viewBox="0 0 24 24">
+            <path
+              fill="#4285F4"
+              d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"
+            />
+            <path
+              fill="#34A853"
+              d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"
+            />
+            <path
+              fill="#FBBC05"
+              d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.06H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.94l2.85-2.22.81-.63z"
+            />
+            <path
+              fill="#EA4335"
+              d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.06l3.66 2.84c.87-2.6 3.3-4.52 6.16-4.52z"
+            />
+          </svg>
+          <span>Continue with Google</span>
+        </button>
       </div>
+
+      {/* Google Sign-In Account Chooser Modal */}
+      {isGoogleModalOpen && (
+        <div style={{
+          position: 'fixed',
+          top: 0,
+          left: 0,
+          right: 0,
+          bottom: 0,
+          background: 'rgba(0, 0, 0, 0.6)',
+          backdropFilter: 'blur(5px)',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          zIndex: 9999,
+          padding: '1rem'
+        }}>
+          <div style={{
+            background: 'var(--bg-card)',
+            border: '1px solid var(--border-light)',
+            borderRadius: '20px',
+            padding: '2rem',
+            maxWidth: '420px',
+            width: '100%',
+            boxShadow: '0 20px 40px rgba(0,0,0,0.25)',
+            position: 'relative',
+            animation: 'modalSlideUp 0.2s ease-out'
+          }}>
+            {/* Close Button */}
+            <button
+              onClick={() => setIsGoogleModalOpen(false)}
+              style={{
+                position: 'absolute',
+                top: '16px',
+                right: '16px',
+                background: 'transparent',
+                border: 'none',
+                color: 'var(--text-muted)',
+                cursor: 'pointer'
+              }}
+            >
+              <X size={20} />
+            </button>
+
+            {/* Google Header */}
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginBottom: '1.25rem' }}>
+              <svg width="24" height="24" viewBox="0 0 24 24">
+                <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
+                <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
+                <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.06H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.94l2.85-2.22.81-.63z"/>
+                <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.06l3.66 2.84c.87-2.6 3.3-4.52 6.16-4.52z"/>
+              </svg>
+              <div>
+                <h3 style={{ margin: 0, fontSize: '1.15rem', fontWeight: 700, color: 'var(--text-main)' }}>
+                  Sign in with Google
+                </h3>
+                <span style={{ fontSize: '0.8rem', color: 'var(--text-secondary)' }}>
+                  Choose an account to continue to PortfolioCraft
+                </span>
+              </div>
+            </div>
+
+            {/* Quick 1-Click User Account Option */}
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem', marginBottom: '1.25rem' }}>
+              <div
+                onClick={() => executeGoogleAuth('adhithyam0210@gmail.com', 'Adhithya M')}
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '0.85rem',
+                  padding: '0.75rem 1rem',
+                  border: '1.5px solid var(--border-medium)',
+                  borderRadius: '12px',
+                  background: 'var(--bg-subtle)',
+                  cursor: 'pointer',
+                  transition: 'all 0.15s ease'
+                }}
+                onMouseEnter={(e) => { e.currentTarget.style.borderColor = 'var(--accent-primary)'; }}
+                onMouseLeave={(e) => { e.currentTarget.style.borderColor = 'var(--border-medium)'; }}
+              >
+                <div style={{
+                  width: '36px',
+                  height: '36px',
+                  borderRadius: '50%',
+                  background: '#4285F4',
+                  color: '#ffffff',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  fontWeight: 700,
+                  fontSize: '0.9rem'
+                }}>
+                  A
+                </div>
+                <div style={{ flex: 1, textAlign: 'left' }}>
+                  <div style={{ fontSize: '0.9rem', fontWeight: 600, color: 'var(--text-main)' }}>Adhithya M</div>
+                  <div style={{ fontSize: '0.78rem', color: 'var(--text-secondary)' }}>adhithyam0210@gmail.com</div>
+                </div>
+              </div>
+            </div>
+
+            {/* Custom Google Email Input */}
+            <div style={{ borderTop: '1px solid var(--border-light)', paddingTop: '1rem' }}>
+              <label style={{ display: 'block', fontSize: '0.82rem', fontWeight: 600, color: 'var(--text-secondary)', marginBottom: '0.35rem' }}>
+                Or enter another Google email:
+              </label>
+              <div style={{ display: 'flex', gap: '0.5rem' }}>
+                <input
+                  type="email"
+                  value={customGoogleEmail}
+                  onChange={(e) => setCustomGoogleEmail(e.target.value)}
+                  style={{
+                    flex: 1,
+                    padding: '0.65rem 0.85rem',
+                    borderRadius: '8px',
+                    border: '1px solid var(--border-medium)',
+                    background: 'var(--bg-surface)',
+                    color: 'var(--text-main)',
+                    fontSize: '0.86rem',
+                    outline: 'none'
+                  }}
+                />
+                <button
+                  type="button"
+                  disabled={!customGoogleEmail.includes('@')}
+                  onClick={() => executeGoogleAuth(customGoogleEmail, customGoogleEmail.split('@')[0])}
+                  className="btn btn-primary btn-sm"
+                  style={{ borderRadius: '8px', padding: '0.65rem 1rem' }}
+                >
+                  Continue
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
+
