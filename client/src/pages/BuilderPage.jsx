@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useRef } from 'react';
 import { portfolioApi } from '../services/api';
 import { useAuth } from '../context/AuthContext';
 import { useToast } from '../context/ToastContext';
@@ -60,6 +60,13 @@ export const BuilderPage = ({ initialTab = 'personal', onNavigate }) => {
   const [mobileView, setMobileView] = useState('editor'); // 'editor' or 'preview' on small viewports
   const [isShareOpen, setIsShareOpen] = useState(false);
 
+  // Autosave status: 'saved' | 'saving' | 'unsaved' | 'error'
+  const [autosaveStatus, setAutosaveStatus] = useState('saved');
+  const autosaveTimerRef = useRef(null);
+  const initialLoadedRef = useRef(false);
+  const lastSavedPayloadRef = useRef('');
+  const isSavingRef = useRef(false);
+
   // Core state containing portfolio, profile, lists, and settings
   const [data, setData] = useState({
     portfolio: {},
@@ -74,12 +81,46 @@ export const BuilderPage = ({ initialTab = 'personal', onNavigate }) => {
     settings: {}
   });
 
+  // Helper to serialize saveable profile & customization data
+  const getSerializedPayload = (currentData) => {
+    if (!currentData) return '';
+    return JSON.stringify({
+      profile: {
+        full_name: currentData.profile?.full_name || '',
+        professional_title: currentData.profile?.professional_title || '',
+        short_intro: currentData.profile?.short_intro || '',
+        about: currentData.profile?.about || '',
+        location: currentData.profile?.location || '',
+        phone: currentData.profile?.phone || '',
+        website: currentData.profile?.website || '',
+        email: currentData.profile?.email || '',
+        linkedin: currentData.profile?.linkedin || '',
+        github: currentData.profile?.github || '',
+        twitter: currentData.profile?.twitter || '',
+        availability_status: currentData.profile?.availability_status || '',
+        show_availability_badge: currentData.profile?.show_availability_badge,
+        profile_image: currentData.profile?.profile_image || ''
+      },
+      customization: {
+        template: currentData.portfolio?.template || 'modern',
+        theme: currentData.portfolio?.theme || 'dark',
+        font_family: currentData.portfolio?.font_family || 'Inter',
+        accent_color: currentData.portfolio?.accent_color || '#6366f1',
+        section_visibility: currentData.portfolio?.section_visibility || {}
+      }
+    });
+  };
+
   const loadPortfolio = async () => {
     try {
       setLoading(true);
       const res = await portfolioApi.getMyPortfolio();
       if (res.success) {
-        setData(res.data || res);
+        const loadedData = res.data || res;
+        setData(loadedData);
+        lastSavedPayloadRef.current = getSerializedPayload(loadedData);
+        initialLoadedRef.current = true;
+        setAutosaveStatus('saved');
       }
     } catch (err) {
       toast.error('Failed to load portfolio details.');
@@ -92,23 +133,82 @@ export const BuilderPage = ({ initialTab = 'personal', onNavigate }) => {
     loadPortfolio();
   }, []);
 
-  // Save changes (Profile & Customization)
+  // Core background save routine
+  const performSave = async (dataToSave = data) => {
+    if (isSavingRef.current) return true;
+    isSavingRef.current = true;
+    setAutosaveStatus('saving');
+
+    try {
+      const promises = [];
+      if (dataToSave.profile) {
+        promises.push(portfolioApi.updateProfile(dataToSave.profile));
+      }
+      if (dataToSave.portfolio) {
+        promises.push(portfolioApi.updateCustomization({
+          template: dataToSave.portfolio.template,
+          theme: dataToSave.portfolio.theme,
+          font_family: dataToSave.portfolio.font_family,
+          accent_color: dataToSave.portfolio.accent_color,
+          section_visibility: dataToSave.portfolio.section_visibility
+        }));
+      }
+
+      await Promise.all(promises);
+      lastSavedPayloadRef.current = getSerializedPayload(dataToSave);
+      setAutosaveStatus('saved');
+      return true;
+    } catch (err) {
+      console.error('Autosave error:', err);
+      setAutosaveStatus('error');
+      return false;
+    } finally {
+      isSavingRef.current = false;
+    }
+  };
+
+  // Continuous debounced autosave when profile or portfolio changes
+  useEffect(() => {
+    if (!initialLoadedRef.current) return;
+
+    const currentPayload = getSerializedPayload(data);
+    if (currentPayload === lastSavedPayloadRef.current) {
+      return;
+    }
+
+    setAutosaveStatus('unsaved');
+
+    if (autosaveTimerRef.current) {
+      clearTimeout(autosaveTimerRef.current);
+    }
+
+    autosaveTimerRef.current = setTimeout(() => {
+      performSave(data);
+    }, 1200);
+
+    return () => {
+      if (autosaveTimerRef.current) {
+        clearTimeout(autosaveTimerRef.current);
+      }
+    };
+  }, [data.profile, data.portfolio]);
+
+  // Save changes (Profile & Customization) & set status to draft
   const handleSaveDraft = async () => {
+    if (autosaveTimerRef.current) {
+      clearTimeout(autosaveTimerRef.current);
+    }
     setSaving(true);
     try {
-      if (data.profile) {
-        await portfolioApi.updateProfile(data.profile);
-      }
-      if (data.portfolio) {
-        await portfolioApi.updateCustomization({
-          template: data.portfolio.template,
-          theme: data.portfolio.theme,
-          font_family: data.portfolio.font_family,
-          accent_color: data.portfolio.accent_color,
-          section_visibility: data.portfolio.section_visibility
-        });
-      }
+      const ok = await performSave(data);
+      if (!ok) throw new Error('Could not save details');
+
       await portfolioApi.saveDraft();
+      setData((prev) => ({
+        ...prev,
+        portfolio: { ...prev.portfolio, status: 'draft' }
+      }));
+      setAutosaveStatus('saved');
       toast.success('All changes saved to draft!');
     } catch (err) {
       toast.error('Failed to save draft: ' + (err.message || 'Error'));
@@ -119,28 +219,22 @@ export const BuilderPage = ({ initialTab = 'personal', onNavigate }) => {
 
   // Publish Portfolio
   const handlePublish = async () => {
+    if (autosaveTimerRef.current) {
+      clearTimeout(autosaveTimerRef.current);
+    }
     setPublishing(true);
     try {
-      if (data.profile) {
-        await portfolioApi.updateProfile(data.profile);
-      }
-      if (data.portfolio) {
-        await portfolioApi.updateCustomization({
-          template: data.portfolio.template,
-          theme: data.portfolio.theme,
-          font_family: data.portfolio.font_family,
-          accent_color: data.portfolio.accent_color,
-          section_visibility: data.portfolio.section_visibility
-        });
-      }
+      const ok = await performSave(data);
+      if (!ok) throw new Error('Could not save details');
 
-      const slug = data.portfolio?.slug || user?.username;
-      const res = await portfolioApi.publish(slug);
-      toast.success('Your portfolio is now published and live!');
+      const slugToPublish = data.portfolio?.slug || user?.username;
+      const res = await portfolioApi.publish(slugToPublish);
       setData((prev) => ({
         ...prev,
-        portfolio: { ...prev.portfolio, status: 'published', slug: res.slug || slug }
+        portfolio: { ...prev.portfolio, status: 'published', slug: res.slug || slugToPublish }
       }));
+      setAutosaveStatus('saved');
+      toast.success('Your portfolio is now published and live!');
     } catch (err) {
       toast.error('Failed to publish: ' + (err.message || 'Error'));
     } finally {
@@ -165,7 +259,7 @@ export const BuilderPage = ({ initialTab = 'personal', onNavigate }) => {
     <div className="builder-layout-wrapper">
       {/* Top Builder Toolbar (Theme-aware) */}
       <div className="builder-header-bar">
-        {/* Left: Back to Dashboard & Status */}
+        {/* Left: Back to Dashboard, Title, Status & Autosave Indicator */}
         <div style={{ display: 'flex', alignItems: 'center', gap: '0.85rem' }}>
           <button
             onClick={() => onNavigate('dashboard')}
@@ -176,7 +270,7 @@ export const BuilderPage = ({ initialTab = 'personal', onNavigate }) => {
             <ArrowLeft size={16} />
           </button>
 
-          <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0.55rem', flexWrap: 'wrap' }}>
             <span style={{ fontWeight: 800, fontSize: '1.05rem', color: 'var(--text-main)', letterSpacing: '-0.02em' }}>
               Portfolio Builder
             </span>
@@ -185,12 +279,85 @@ export const BuilderPage = ({ initialTab = 'personal', onNavigate }) => {
               style={{
                 background: isPublished ? 'rgba(16, 185, 129, 0.12)' : 'rgba(245, 158, 11, 0.12)',
                 color: isPublished ? '#10b981' : '#f59e0b',
-                border: `1px solid ${isPublished ? 'rgba(16, 185, 129, 0.3)' : 'rgba(245, 158, 11, 0.3)'}`
+                border: `1px solid ${isPublished ? 'rgba(16, 185, 129, 0.3)' : 'rgba(245, 158, 11, 0.3)'}`,
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: '0.3rem'
               }}
             >
               {isPublished && <CheckCircle2 size={11} />}
               {status.toUpperCase()}
             </span>
+
+            {/* Autosave Status Pill */}
+            <div
+              style={{
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: '0.35rem',
+                fontSize: '0.75rem',
+                fontWeight: 600,
+                padding: '0.2rem 0.55rem',
+                borderRadius: '20px',
+                background: autosaveStatus === 'saving'
+                  ? 'rgba(99, 102, 241, 0.1)'
+                  : autosaveStatus === 'unsaved'
+                  ? 'rgba(245, 158, 11, 0.1)'
+                  : autosaveStatus === 'error'
+                  ? 'rgba(239, 68, 68, 0.1)'
+                  : 'rgba(16, 185, 129, 0.08)',
+                color: autosaveStatus === 'saving'
+                  ? 'var(--accent-primary, #6366f1)'
+                  : autosaveStatus === 'unsaved'
+                  ? '#d97706'
+                  : autosaveStatus === 'error'
+                  ? '#ef4444'
+                  : '#10b981',
+                border: `1px solid ${
+                  autosaveStatus === 'saving'
+                    ? 'rgba(99, 102, 241, 0.25)'
+                    : autosaveStatus === 'unsaved'
+                    ? 'rgba(245, 158, 11, 0.25)'
+                    : autosaveStatus === 'error'
+                    ? 'rgba(239, 68, 68, 0.25)'
+                    : 'rgba(16, 185, 129, 0.2)'
+                }`,
+                transition: 'all 0.2s ease'
+              }}
+              title="Changes to personal info & design are automatically saved as you edit"
+            >
+              {autosaveStatus === 'saving' && (
+                <>
+                  <div style={{
+                    width: '10px',
+                    height: '10px',
+                    border: '1.5px solid currentColor',
+                    borderTopColor: 'transparent',
+                    borderRadius: '50%',
+                    animation: 'spin 0.8s linear infinite'
+                  }} />
+                  <span>Autosaving...</span>
+                </>
+              )}
+              {autosaveStatus === 'unsaved' && (
+                <>
+                  <span style={{ width: '6px', height: '6px', borderRadius: '50%', background: '#d97706' }} />
+                  <span>Unsaved</span>
+                </>
+              )}
+              {autosaveStatus === 'saved' && (
+                <>
+                  <CheckCircle2 size={11} color="#10b981" />
+                  <span>Autosaved</span>
+                </>
+              )}
+              {autosaveStatus === 'error' && (
+                <>
+                  <span style={{ width: '6px', height: '6px', borderRadius: '50%', background: '#ef4444' }} />
+                  <span>Save Error</span>
+                </>
+              )}
+            </div>
           </div>
 
           <span style={{ fontSize: '0.82rem', color: 'var(--text-muted)', display: 'none' }} className="d-md-inline">
@@ -293,7 +460,7 @@ export const BuilderPage = ({ initialTab = 'personal', onNavigate }) => {
             {activeTab === 'personal' && (
               <PersonalInfoForm
                 profile={data.profile || {}}
-                onChange={(updatedProfile) => setData({ ...data, profile: updatedProfile })}
+                onChange={(updatedProfile) => setData((prev) => ({ ...prev, profile: updatedProfile }))}
                 onProfilePhotoUpdated={(url) =>
                   setData((prev) => ({
                     ...prev,
@@ -306,56 +473,56 @@ export const BuilderPage = ({ initialTab = 'personal', onNavigate }) => {
             {activeTab === 'customization' && (
               <CustomizationForm
                 portfolio={data.portfolio || {}}
-                onChange={(updatedPortfolio) => setData({ ...data, portfolio: updatedPortfolio })}
+                onChange={(updatedPortfolio) => setData((prev) => ({ ...prev, portfolio: updatedPortfolio }))}
               />
             )}
 
             {activeTab === 'education' && (
               <EducationForm
                 education={data.education || []}
-                onListChange={(list) => setData({ ...data, education: list })}
+                onListChange={(list) => setData((prev) => ({ ...prev, education: list }))}
               />
             )}
 
             {activeTab === 'skills' && (
               <SkillsForm
                 skills={data.skills || []}
-                onListChange={(list) => setData({ ...data, skills: list })}
+                onListChange={(list) => setData((prev) => ({ ...prev, skills: list }))}
               />
             )}
 
             {activeTab === 'projects' && (
               <ProjectsForm
                 projects={data.projects || []}
-                onListChange={(list) => setData({ ...data, projects: list })}
+                onListChange={(list) => setData((prev) => ({ ...prev, projects: list }))}
               />
             )}
 
             {activeTab === 'experience' && (
               <ExperienceForm
                 experience={data.experience || []}
-                onListChange={(list) => setData({ ...data, experience: list })}
+                onListChange={(list) => setData((prev) => ({ ...prev, experience: list }))}
               />
             )}
 
             {activeTab === 'certifications' && (
               <CertificationsForm
                 certifications={data.certifications || []}
-                onListChange={(list) => setData({ ...data, certifications: list })}
+                onListChange={(list) => setData((prev) => ({ ...prev, certifications: list }))}
               />
             )}
 
             {activeTab === 'achievements' && (
               <AchievementsForm
                 achievements={data.achievements || []}
-                onListChange={(list) => setData({ ...data, achievements: list })}
+                onListChange={(list) => setData((prev) => ({ ...prev, achievements: list }))}
               />
             )}
 
             {activeTab === 'resume' && (
               <ResumeForm
                 resume={data.resume}
-                onResumeUpdated={(updatedResume) => setData({ ...data, resume: updatedResume })}
+                onResumeUpdated={(updatedResume) => setData((prev) => ({ ...prev, resume: updatedResume }))}
               />
             )}
 
