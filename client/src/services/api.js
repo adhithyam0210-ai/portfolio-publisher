@@ -1,5 +1,5 @@
 // Client API service with token handling
-const API_BASE = '/api';
+const API_BASE = (import.meta.env.VITE_API_URL || '/api').replace(/\/$/, '');
 
 export const getAuthToken = () => localStorage.getItem('portfolio_auth_token');
 export const setAuthToken = (token) => localStorage.setItem('portfolio_auth_token', token);
@@ -26,7 +26,23 @@ export const apiRequest = async (endpoint, options = {}) => {
 
   try {
     const response = await fetch(`${API_BASE}${endpoint}`, config);
-    const data = await response.json();
+    
+    let data;
+    const contentType = response.headers.get('content-type') || '';
+    if (contentType.includes('application/json')) {
+      data = await response.json();
+    } else {
+      const text = await response.text();
+      try {
+        data = JSON.parse(text);
+      } catch {
+        if (text.includes('<!DOCTYPE') || text.includes('<html')) {
+          data = { message: `Backend API route unavailable (${response.status}). The server returned HTML instead of JSON. Ensure your API server is running.` };
+        } else {
+          data = { message: text || `HTTP ${response.status}: ${response.statusText}` };
+        }
+      }
+    }
 
     if (!response.ok) {
       const error = new Error(data.message || 'API request failed');

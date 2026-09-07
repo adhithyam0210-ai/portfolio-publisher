@@ -2,7 +2,8 @@ const multer = require('multer');
 const path = require('path');
 const fs = require('fs');
 
-const uploadsRoot = path.resolve(__dirname, '../../uploads');
+const isServerless = Boolean(process.env.VERCEL || process.env.AWS_LAMBDA_FUNCTION_NAME);
+const uploadsRoot = isServerless ? '/tmp/uploads' : path.resolve(__dirname, '../../uploads');
 const avatarDir = path.join(uploadsRoot, 'avatars');
 const resumeDir = path.join(uploadsRoot, 'resumes');
 const projectsDir = path.join(uploadsRoot, 'projects');
@@ -10,7 +11,11 @@ const certificatesDir = path.join(uploadsRoot, 'certificates');
 
 [avatarDir, resumeDir, projectsDir, certificatesDir].forEach((dir) => {
   if (!fs.existsSync(dir)) {
-    fs.mkdirSync(dir, { recursive: true });
+    try {
+      fs.mkdirSync(dir, { recursive: true });
+    } catch (e) {
+      // Ignore in read-only environment
+    }
   }
 });
 

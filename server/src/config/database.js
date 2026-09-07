@@ -2,12 +2,31 @@ const sqlite3 = require('sqlite3').verbose();
 const path = require('path');
 const fs = require('fs');
 
-const dbDir = path.resolve(__dirname, '../../data');
+const isServerless = Boolean(process.env.VERCEL || process.env.AWS_LAMBDA_FUNCTION_NAME);
+const dbDir = isServerless ? '/tmp' : path.resolve(__dirname, '../../data');
 if (!fs.existsSync(dbDir)) {
-  fs.mkdirSync(dbDir, { recursive: true });
+  try {
+    fs.mkdirSync(dbDir, { recursive: true });
+  } catch (e) {
+    // Ignore in read-only environment
+  }
 }
 
 const dbPath = path.join(dbDir, 'portfolio.sqlite');
+
+// On serverless cold start, copy pre-seeded database to /tmp if it doesn't exist
+if (isServerless && !fs.existsSync(dbPath)) {
+  const seedPath = path.resolve(__dirname, '../../data/portfolio.sqlite');
+  if (fs.existsSync(seedPath)) {
+    try {
+      fs.copyFileSync(seedPath, dbPath);
+      console.log('Copied pre-seeded SQLite database to /tmp/portfolio.sqlite');
+    } catch (e) {
+      console.warn('Could not copy seed database to /tmp:', e.message);
+    }
+  }
+}
+
 const db = new sqlite3.Database(dbPath, (err) => {
   if (err) {
     console.error('Failed to connect to SQLite database:', err.message);
