@@ -61,6 +61,21 @@ export const App = () => {
     return () => window.removeEventListener('popstate', handlePopState);
   }, []);
 
+  // Role guards: Admin routes vs User routes & home page dashboard routing
+  useEffect(() => {
+    if (user) {
+      if (isAdmin) {
+        if (['home', 'dashboard', 'builder', 'login', 'register'].includes(route.view)) {
+          navigate('admin');
+        }
+      } else {
+        if (['home', 'admin', 'login', 'register'].includes(route.view)) {
+          navigate('dashboard');
+        }
+      }
+    }
+  }, [route.view, user, isAdmin]);
+
   // Handle Public Portfolio direct rendering
   if (route.view === 'public') {
     return <PublicPortfolioPage slug={route.slug} onNavigateHome={() => navigate('home')} />;
@@ -76,21 +91,6 @@ export const App = () => {
       </div>
     );
   }
-
-  // Role guards: Admin routes vs User routes & home page dashboard routing
-  useEffect(() => {
-    if (user) {
-      if (isAdmin) {
-        if (['home', 'dashboard', 'builder', 'login', 'register'].includes(route.view)) {
-          navigate('admin');
-        }
-      } else {
-        if (['home', 'admin', 'login', 'register'].includes(route.view)) {
-          navigate('dashboard');
-        }
-      }
-    }
-  }, [route.view, user, isAdmin]);
 
   if (protectedViews.includes(route.view) && !user) {
     return (
