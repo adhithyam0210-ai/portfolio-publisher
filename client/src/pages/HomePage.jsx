@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import {
   Layers,
   Sparkles,
@@ -17,326 +17,455 @@ import {
   ExternalLink,
   Mail,
   Grid,
-  Cpu
+  Cpu,
+  Monitor,
+  Tablet,
+  Smartphone,
+  Sun,
+  Moon,
+  Lock,
+  Download,
+  BookOpen
 } from 'lucide-react';
+import { PortfolioRenderer } from '../components/templates/PortfolioRenderer';
 import { getGmailComposeUrl } from '../utils/url';
 
+// Curated 8 Templates with metadata and accent colors
+const TEMPLATES_LIST = [
+  {
+    id: 'bento',
+    name: 'Bento Grid',
+    badge: 'Popular',
+    icon: Grid,
+    accent: '#6366f1',
+    font: 'Inter',
+    desc: 'Apple/Linear-inspired modular bento cards with responsive grids & action chips.'
+  },
+  {
+    id: 'modern',
+    name: 'Modern Glass',
+    badge: 'Featured',
+    icon: Sparkles,
+    accent: '#10b981',
+    font: 'Inter',
+    desc: 'Frosted glassmorphism cards, vibrant glowing accents, and smooth lift physics.'
+  },
+  {
+    id: 'cyberpunk',
+    name: 'Cyberpunk HUD',
+    badge: 'Futuristic',
+    icon: Cpu,
+    accent: '#06b6d4',
+    font: 'JetBrains Mono',
+    desc: 'Neon cyan & magenta high-tech HUD terminal with project filter and telemetry tags.'
+  },
+  {
+    id: 'creative',
+    name: 'Creative Flair',
+    badge: 'Vibrant',
+    icon: Palette,
+    accent: '#ec4899',
+    font: 'Poppins',
+    desc: 'Warm playful gradients, asymmetrical cards, and vibrant pill badges.'
+  },
+  {
+    id: 'minimal',
+    name: 'Swiss Minimalist',
+    badge: 'Clean',
+    icon: Layers,
+    accent: '#64748b',
+    font: 'Inter',
+    desc: 'High-contrast typography, generous whitespace, and razor-sharp border lines.'
+  },
+  {
+    id: 'terminal',
+    name: 'Developer Terminal',
+    badge: 'Geek',
+    icon: Code2,
+    accent: '#22c55e',
+    font: 'JetBrains Mono',
+    desc: 'Hacker bash console with interactive command outputs and git branch markers.'
+  },
+  {
+    id: 'editorial',
+    name: 'Vogue Editorial',
+    badge: 'Luxury',
+    icon: BookOpen,
+    accent: '#d97706',
+    font: 'Playfair Display',
+    desc: 'Monograph magazine aesthetic with luxury serif titles and numbered spreads.'
+  },
+  {
+    id: 'brutalist',
+    name: 'Neo-Brutalism',
+    badge: 'Bold',
+    icon: Zap,
+    accent: '#f59e0b',
+    font: 'Space Grotesk',
+    desc: 'Bold 3px black borders, solid pop drop-shadows, and ticker marquee announcement.'
+  }
+];
+
+// Rich, realistic sample portfolio data used for the live interactive showcase
+const SAMPLE_PORTFOLIO_BASE = {
+  profile: {
+    full_name: 'Adhithya M',
+    professional_title: 'Full-Stack Systems Engineer',
+    location: 'Bangalore, India',
+    email: 'adhithyam0210@gmail.com',
+    phone: '9876543210',
+    short_intro: 'Crafting high-throughput web applications, fault-tolerant backend architectures, and elegant user interfaces.',
+    about: 'Software engineer passionate about building high-performance web systems, distributed API architectures, and polished interactive experiences. Experienced across modern JavaScript/TypeScript, React, Node.js, SQLite, and cloud deployment pipelines.',
+    profile_image: 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=300&auto=format&fit=crop&q=80',
+    github: 'https://github.com/adhithyam0210-ai',
+    linkedin: 'https://linkedin.com/in/adhithya',
+    twitter: 'https://twitter.com/adhithya',
+    website: 'https://adhithya.dev'
+  },
+  skills: [
+    { skill_name: 'React.js', proficiency: 'Expert' },
+    { skill_name: 'Node.js & Express', proficiency: 'Advanced' },
+    { skill_name: 'TypeScript', proficiency: 'Advanced' },
+    { skill_name: 'SQLite & PostgreSQL', proficiency: 'Advanced' },
+    { skill_name: 'Cloud & Vercel Deployments', proficiency: 'Expert' },
+    { skill_name: 'Tailwind & Modern CSS', proficiency: 'Expert' },
+    { skill_name: 'RESTful API Architecture', proficiency: 'Expert' },
+    { skill_name: 'Python', proficiency: 'Intermediate' }
+  ],
+  projects: [
+    {
+      title: 'PortfolioCraft Publisher Platform',
+      description: 'An all-in-one developer portfolio builder featuring 8 distinct templates, live interactive synchronization, and serverless hosting.',
+      technologies: 'React, Node.js, Express, SQLite, Vercel',
+      live_url: 'https://portfolio-publisher-app.vercel.app',
+      github_url: 'https://github.com/adhithyam0210-ai/portfolio-publisher',
+      image_url: 'https://images.unsplash.com/photo-1555066931-4365d14bab8c?w=600&auto=format&fit=crop&q=80'
+    },
+    {
+      title: 'Distributed Telemetry Engine',
+      description: 'High-throughput event ingest and metrics tracing platform featuring real-time stream aggregation and alerting.',
+      technologies: 'Node.js, WebSockets, Redis, Chart.js',
+      live_url: 'https://demo.example.com',
+      github_url: 'https://github.com/adhithyam0210-ai/telemetry',
+      image_url: 'https://images.unsplash.com/photo-1551288049-bebda4e38f71?w=600&auto=format&fit=crop&q=80'
+    }
+  ],
+  resume: {
+    original_name: 'Adhithya_Resume.pdf',
+    download_url: '#'
+  },
+  settings: {
+    contact_visible: 1,
+    resume_downloadable: 1,
+    email_visible: 1,
+    phone_visible: 0
+  },
+  visibility: {
+    about: true,
+    skills: true,
+    projects: true,
+    resume: true
+  }
+};
+
 export const HomePage = ({ onNavigate }) => {
-  // Streamlined 4 Essential Core Pillars
-  const coreFeatures = [
-    {
-      id: 'builder',
-      title: 'Interactive Multi-Step Builder',
-      badge: 'Core Engine',
-      icon: <Code2 size={24} />,
-      description:
-        'Craft your developer profile, skills, projects, and bio in real-time with instant live preview before publishing.'
-    },
-    {
-      id: 'templates',
-      title: '8 Distinct Aesthetic Archetypes',
-      badge: 'Design System',
-      icon: <Palette size={24} />,
-      description:
-        'Choose from Bento Grid, Cyberpunk Neon, Modern Glass, Minimalist, Terminal, Editorial, and Neo-Brutalist layouts.'
-    },
-    {
-      id: 'publishing',
-      title: '1-Click Publishing & Custom Slug',
-      badge: 'Instant Live',
-      icon: <Globe size={24} />,
-      description:
-        'Deploy your portfolio to a clean personalized URL (e.g. /portfolio/:username) with dynamic high-resolution QR codes.'
-    },
-    {
-      id: 'resume',
-      title: 'ATS Resume Document Hosting',
-      badge: 'Career Ready',
-      icon: <FileText size={24} />,
-      description:
-        'Upload your PDF resume with direct one-click recruiter download, Gmail web compose contact, and privacy controls.'
-    }
-  ];
+  // Active state for the interactive showcase
+  const [activeTemplateId, setActiveTemplateId] = useState('bento');
+  const [activeTheme, setActiveTheme] = useState('dark');
+  const [activeViewport, setActiveViewport] = useState('desktop'); // desktop | tablet | mobile
 
-  // 8 Curated Templates showcase including the new Bento and Cyberpunk designs
-  const templates = [
-    {
-      id: 'bento',
-      name: 'Bento Grid',
-      tagline: 'Modern modular Apple/Linear grid aesthetic',
-      accent: '#6366f1',
-      badge: 'Popular',
-      features: ['Curated bento tiles', 'Fluid responsive grid', 'Micro-interactions']
-    },
-    {
-      id: 'cyberpunk',
-      name: 'Cyberpunk HUD',
-      tagline: 'Neon cyan & magenta high-tech terminal',
-      accent: '#06b6d4',
-      badge: 'Futuristic',
-      features: ['Hacker HUD accents', 'Neon glow borders', 'Terminal console vibes']
-    },
-    {
-      id: 'modern',
-      name: 'Modern Glass',
-      tagline: 'Glassmorphism cards & glowing gradients',
-      accent: '#10b981',
-      badge: 'Featured',
-      features: ['Frosted glass cards', 'Vibrant emerald glow', 'Sleek lift animation']
-    },
-    {
-      id: 'creative',
-      name: 'Creative Flair',
-      tagline: 'Warm gradients & asymmetric layouts',
-      accent: '#ec4899',
-      badge: 'Expressive',
-      features: ['Playful card depths', 'Warm sunset tones', 'Dynamic pill badges']
-    },
-    {
-      id: 'minimal',
-      name: 'Swiss Minimalist',
-      tagline: 'High-contrast monochrome typography',
-      accent: '#64748b',
-      badge: 'Clean',
-      features: ['High readability', 'Sharp border accents', 'Generous whitespace']
-    },
-    {
-      id: 'terminal',
-      name: 'Developer Terminal',
-      tagline: 'Monospace hacker console & bash prompt',
-      accent: '#22c55e',
-      badge: 'Geek',
-      features: ['Bash command style', 'Matrix green syntax', 'Git branch logs']
-    },
-    {
-      id: 'editorial',
-      name: 'Vogue Editorial',
-      tagline: 'Editorial monograph serif typography',
-      accent: '#d97706',
-      badge: 'Luxury',
-      features: ['Playfair Display', 'Gold tone accents', 'Curated colophon']
-    },
-    {
-      id: 'brutalist',
-      name: 'Neo-Brutalism',
-      tagline: 'Bold 3px solid borders & sticker tabs',
-      accent: '#f59e0b',
-      badge: 'Bold',
-      features: ['Solid drop shadows', 'Vibrant pop colors', 'Marquee announcement']
-    }
-  ];
+  const activeTemplate = TEMPLATES_LIST.find((t) => t.id === activeTemplateId) || TEMPLATES_LIST[0];
 
-  const steps = [
-    {
-      number: '1',
-      title: 'Create Account',
-      desc: 'Sign up in seconds and claim your unique profile slug.'
-    },
-    {
-      number: '2',
-      title: 'Add Projects & Resume',
-      desc: 'Add your live projects, technical skills, and upload your resume.'
-    },
-    {
-      number: '3',
-      title: 'Pick Template & Publish',
-      desc: 'Select your preferred visual style and share your live portfolio link.'
+  // Dynamic portfolio object for the live renderer
+  const showcaseData = {
+    ...SAMPLE_PORTFOLIO_BASE,
+    portfolio: {
+      slug: 'adhithya',
+      title: `${SAMPLE_PORTFOLIO_BASE.profile.full_name} — Portfolio`,
+      template: activeTemplate.id,
+      theme: activeTheme,
+      accent_color: activeTemplate.accent,
+      font_family: activeTemplate.font,
+      status: 'PUBLISHED'
     }
-  ];
+  };
+
+  const scrollToSection = (id) => {
+    const el = document.getElementById(id);
+    if (el) el.scrollIntoView({ behavior: 'smooth' });
+  };
 
   return (
     <div className="landing-page-wrap">
       {/* ================= HERO SECTION ================= */}
-      <section className="landing-hero">
+      <section className="landing-hero" style={{ paddingBottom: '3rem' }}>
         <div className="landing-pill-tag">
-          <Sparkles size={16} />
-          <span>The Next-Generation Portfolio Publisher</span>
+          <Sparkles size={15} />
+          <span>8 Next-Gen Working Templates • 1-Click Publishing</span>
         </div>
 
         <h1 className="landing-title">
-          Build &amp; Publish Your{' '}
-          <span className="landing-title-gradient">Standout Portfolio</span>
+          Your Standout Developer Portfolio.{' '}
+          <span className="landing-title-gradient">Crafted &amp; Live in Seconds.</span>
         </h1>
 
         <p className="landing-subtitle">
-          Design a stunning developer portfolio with real-time live preview, 8 distinct aesthetic templates,
-          dynamic QR codes, and ATS-ready resume hosting in minutes.
+          Transform your projects, technical skills, and resume into a beautifully customized portfolio.
+          Choose an aesthetic, personalize in real time, and share your unique public link with recruiters.
         </p>
 
         {/* Primary Action Buttons */}
-        <div className="landing-hero-actions">
+        <div className="landing-hero-actions" style={{ marginBottom: '1.5rem' }}>
           <button
             className="btn btn-primary btn-lg"
             onClick={() => onNavigate('register')}
             style={{ fontSize: '1.02rem', padding: '0.85rem 1.85rem' }}
           >
-            <UserPlus size={19} />
+            <UserPlus size={18} />
             <span>Create Free Portfolio</span>
           </button>
 
           <button
             className="btn btn-secondary btn-lg"
-            onClick={() => onNavigate('login')}
+            onClick={() => scrollToSection('interactive-showcase')}
             style={{ fontSize: '1.02rem', padding: '0.85rem 1.85rem' }}
           >
-            <LogIn size={19} />
-            <span>Sign In</span>
+            <Palette size={18} />
+            <span>Explore Templates</span>
           </button>
 
           <button
             className="btn btn-outline btn-lg"
-            onClick={() => onNavigate('public', 'john-doe')}
-            title="View sample live portfolio"
+            onClick={() => onNavigate('login')}
             style={{ fontSize: '1.02rem', padding: '0.85rem 1.5rem' }}
           >
-            <ExternalLink size={17} />
-            <span>Live Demo</span>
+            <LogIn size={18} />
+            <span>Sign In</span>
           </button>
         </div>
-
-        {/* Highlight Metrics */}
-        <div className="landing-metrics-bar">
-          <div className="metric-item">
-            <div className="metric-icon-wrap">
-              <Palette size={20} />
-            </div>
-            <div>
-              <div className="metric-value">8 Archetypes</div>
-              <div className="metric-label">Custom Templates</div>
-            </div>
-          </div>
-
-          <div className="metric-item">
-            <div className="metric-icon-wrap">
-              <Code2 size={20} />
-            </div>
-            <div>
-              <div className="metric-value">Live Sync</div>
-              <div className="metric-label">Real-Time Preview</div>
-            </div>
-          </div>
-
-          <div className="metric-item">
-            <div className="metric-icon-wrap">
-              <QrCode size={20} />
-            </div>
-            <div>
-              <div className="metric-value">Dynamic QR</div>
-              <div className="metric-label">Instant Share</div>
-            </div>
-          </div>
-
-          <div className="metric-item">
-            <div className="metric-icon-wrap">
-              <Globe size={20} />
-            </div>
-            <div>
-              <div className="metric-value">1-Click Live</div>
-              <div className="metric-label">Clean URL Slug</div>
-            </div>
-          </div>
-        </div>
       </section>
 
-      {/* ================= ESSENTIAL CORE PILLARS ================= */}
-      <section className="landing-section">
-        <div className="section-header">
+      {/* ================= INTERACTIVE LIVE SHOWCASE SECTION ================= */}
+      <section id="interactive-showcase" className="landing-section" style={{ paddingTop: '0.5rem', paddingBottom: '4rem' }}>
+        <div className="section-header" style={{ marginBottom: '1.5rem' }}>
           <div className="section-tag">
             <Zap size={14} />
-            <span>Essential Features</span>
+            <span>Interactive Live Showcase</span>
           </div>
-          <h2 className="section-title">Everything You Need to Stand Out</h2>
+          <h2 className="section-title">Experience Every Template Live</h2>
           <p className="section-desc">
-            Focused, modern tools designed to present your professional journey with maximum visual impact.
+            Click any style below to see how your portfolio looks in real time. Switch themes and screen sizes instantly.
           </p>
         </div>
 
-        <div className="interactive-cards-grid" style={{ gridTemplateColumns: 'repeat(auto-fit, minmax(260px, 1fr))' }}>
-          {coreFeatures.map((feature) => (
-            <div
-              key={feature.id}
-              className="feature-interactive-card"
-              onClick={() => onNavigate('login')}
-              title={`Click to get started with ${feature.title}`}
-            >
-              <div>
-                <div className="card-top-row">
-                  <div className="card-icon-box">{feature.icon}</div>
-                  <span className="card-badge-pill">{feature.badge}</span>
-                </div>
-                <h3 className="card-feature-title">{feature.title}</h3>
-                <p className="card-feature-desc">{feature.description}</p>
-              </div>
+        <div className="showcase-wrapper">
+          {/* 1. Horizontal Template Selector Tabs */}
+          <div className="showcase-tabs-bar">
+            {TEMPLATES_LIST.map((tmpl) => {
+              const Icon = tmpl.icon;
+              const isActive = activeTemplateId === tmpl.id;
+              return (
+                <button
+                  key={tmpl.id}
+                  type="button"
+                  onClick={() => setActiveTemplateId(tmpl.id)}
+                  className={`showcase-tab-btn ${isActive ? 'active' : ''}`}
+                >
+                  <Icon size={16} color={isActive ? undefined : tmpl.accent} />
+                  <span>{tmpl.name}</span>
+                  <span className="showcase-tab-badge" style={{ background: isActive ? 'rgba(255,255,255,0.2)' : `${tmpl.accent}22`, color: isActive ? 'inherit' : tmpl.accent }}>
+                    {tmpl.badge}
+                  </span>
+                </button>
+              );
+            })}
+          </div>
 
-              <div className="card-interactive-footer">
-                <span>Try this feature</span>
-                <ArrowRight size={15} />
+          {/* 2. Mockup Device Chrome Bar */}
+          <div className="showcase-controls-bar">
+            {/* Left: Window Dots & Mock Address Bar */}
+            <div className="showcase-mock-browser-bar">
+              <div className="showcase-dots">
+                <span className="showcase-dot red" />
+                <span className="showcase-dot yellow" />
+                <span className="showcase-dot green" />
+              </div>
+              <div className="showcase-url-input">
+                <Lock size={12} />
+                <span>portfoliocraft.com/portfolio/adhithya?style={activeTemplate.id}</span>
               </div>
             </div>
-          ))}
-        </div>
-      </section>
 
-      {/* ================= 8 DISTINCT TEMPLATES SECTION ================= */}
-      <section className="landing-section" style={{ paddingTop: '1.5rem' }}>
-        <div className="section-header">
-          <div className="section-tag">
-            <Palette size={14} />
-            <span>Visual Themes</span>
-          </div>
-          <h2 className="section-title">8 Working Visual Templates</h2>
-          <p className="section-desc">
-            Tailor your portfolio's personality to match your craft. Click any card to preview in your account.
-          </p>
-        </div>
+            {/* Right: Viewport Controls, Theme Toggle & Direct CTA */}
+            <div className="showcase-actions-group">
+              {/* Device Viewport Toggle */}
+              <div className="showcase-pill-toggle">
+                <button
+                  type="button"
+                  onClick={() => setActiveViewport('desktop')}
+                  className={`showcase-toggle-option ${activeViewport === 'desktop' ? 'active' : ''}`}
+                  title="Desktop View (100%)"
+                >
+                  <Monitor size={14} />
+                  <span>Desktop</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setActiveViewport('tablet')}
+                  className={`showcase-toggle-option ${activeViewport === 'tablet' ? 'active' : ''}`}
+                  title="Tablet View (768px)"
+                >
+                  <Tablet size={14} />
+                  <span>Tablet</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setActiveViewport('mobile')}
+                  className={`showcase-toggle-option ${activeViewport === 'mobile' ? 'active' : ''}`}
+                  title="Mobile View (380px)"
+                >
+                  <Smartphone size={14} />
+                  <span>Mobile</span>
+                </button>
+              </div>
 
-        <div className="templates-showcase-grid">
-          {templates.map((tmpl) => (
-            <div
-              key={tmpl.id}
-              className="template-card-preview"
-              onClick={() => onNavigate('login')}
-              title={`Click to use the ${tmpl.name} template`}
-            >
-              <div 
-                className="template-visual-mock" 
-                style={{ 
-                  background: `linear-gradient(135deg, ${tmpl.accent}22, ${tmpl.accent}44)`,
-                  border: `1px solid ${tmpl.accent}55`,
-                  color: 'var(--text-main)'
+              {/* Theme Toggle (Dark / Light) */}
+              <div className="showcase-pill-toggle">
+                <button
+                  type="button"
+                  onClick={() => setActiveTheme('dark')}
+                  className={`showcase-toggle-option ${activeTheme === 'dark' ? 'active' : ''}`}
+                  title="Dark Mode"
+                >
+                  <Moon size={14} />
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setActiveTheme('light')}
+                  className={`showcase-toggle-option ${activeTheme === 'light' ? 'active' : ''}`}
+                  title="Light Mode"
+                >
+                  <Sun size={14} />
+                </button>
+              </div>
+
+              {/* "Use This Template" Action Button */}
+              <button
+                type="button"
+                onClick={() => onNavigate('register')}
+                className="btn btn-primary btn-sm"
+                style={{
+                  borderRadius: '9999px',
+                  padding: '0.45rem 1rem',
+                  fontWeight: 700,
+                  fontSize: '0.82rem',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '0.35rem'
                 }}
               >
-                <span style={{ fontWeight: 800, fontSize: '1.05rem', letterSpacing: '-0.01em' }}>{tmpl.name}</span>
-                <span style={{ fontSize: '0.74rem', opacity: 0.85, marginTop: '4px' }}>{tmpl.badge} Theme</span>
-              </div>
-
-              <h4 style={{ fontSize: '1.1rem', fontWeight: 700, color: 'var(--text-main)', marginBottom: '0.35rem' }}>
-                {tmpl.name}
-              </h4>
-              <p style={{ fontSize: '0.84rem', color: 'var(--text-secondary)', marginBottom: '1rem', minHeight: '38px' }}>
-                {tmpl.tagline}
-              </p>
-
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '0.35rem', marginTop: 'auto', marginBottom: '1rem' }}>
-                {tmpl.features.map((feat, idx) => (
-                  <div key={idx} style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', fontSize: '0.8rem', color: 'var(--text-muted)' }}>
-                    <CheckCircle2 size={13} color="var(--accent-primary)" />
-                    <span>{feat}</span>
-                  </div>
-                ))}
-              </div>
-
-              <div className="card-interactive-footer">
-                <span>Select &amp; Apply</span>
-                <ArrowRight size={14} />
-              </div>
+                <span>Use {activeTemplate.name}</span>
+                <ArrowRight size={13} />
+              </button>
             </div>
-          ))}
+          </div>
+
+          {/* 3. The Live Interactive Preview Window */}
+          <div className="showcase-browser-frame">
+            <div className={`showcase-viewport-container ${activeViewport}`}>
+              <PortfolioRenderer data={showcaseData} />
+            </div>
+          </div>
         </div>
       </section>
 
-      {/* ================= HOW IT WORKS (3 STEPS) ================= */}
-      <section className="landing-section" style={{ paddingTop: '1.5rem' }}>
+      {/* ================= 3 CORE PILLARS (ONLY ESSENTIAL FEATURES) ================= */}
+      <section className="landing-section" style={{ paddingTop: '1rem', paddingBottom: '3.5rem' }}>
+        <div className="section-header">
+          <div className="section-tag">
+            <Sparkles size={14} />
+            <span>Core Highlights</span>
+          </div>
+          <h2 className="section-title">Built for Real Career Impact</h2>
+          <p className="section-desc">
+            Every feature is focused on making your work undeniable to recruiters and hiring managers.
+          </p>
+        </div>
+
+        <div className="core-pillars-grid">
+          {/* Pillar 1 */}
+          <div className="settings-card-smooth" style={{ margin: 0, padding: '1.85rem' }}>
+            <div style={{
+              width: '44px',
+              height: '44px',
+              borderRadius: '12px',
+              background: 'rgba(99, 102, 241, 0.15)',
+              color: '#6366f1',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              marginBottom: '1.25rem'
+            }}>
+              <Palette size={22} />
+            </div>
+            <h3 style={{ fontSize: '1.15rem', fontWeight: 700, color: 'var(--text-main)', marginBottom: '0.5rem' }}>
+              8 Handcrafted Aesthetics
+            </h3>
+            <p style={{ fontSize: '0.88rem', color: 'var(--text-secondary)', lineHeight: 1.6, margin: 0 }}>
+              Switch freely between Bento Grid, Cyberpunk Neon, Modern Glass, Minimalist, Terminal, Editorial, and Neo-Brutalist layouts with 1 click.
+            </p>
+          </div>
+
+          {/* Pillar 2 */}
+          <div className="settings-card-smooth" style={{ margin: 0, padding: '1.85rem' }}>
+            <div style={{
+              width: '44px',
+              height: '44px',
+              borderRadius: '12px',
+              background: 'rgba(16, 185, 129, 0.15)',
+              color: '#10b981',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              marginBottom: '1.25rem'
+            }}>
+              <Globe size={22} />
+            </div>
+            <h3 style={{ fontSize: '1.15rem', fontWeight: 700, color: 'var(--text-main)', marginBottom: '0.5rem' }}>
+              Custom Slug &amp; QR Code
+            </h3>
+            <p style={{ fontSize: '0.88rem', color: 'var(--text-secondary)', lineHeight: 1.6, margin: 0 }}>
+              Claim your personalized link (<code>/portfolio/:slug</code>) and generate high-resolution QR codes to put on your resume or business cards.
+            </p>
+          </div>
+
+          {/* Pillar 3 */}
+          <div className="settings-card-smooth" style={{ margin: 0, padding: '1.85rem' }}>
+            <div style={{
+              width: '44px',
+              height: '44px',
+              borderRadius: '12px',
+              background: 'rgba(245, 158, 11, 0.15)',
+              color: '#f59e0b',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              marginBottom: '1.25rem'
+            }}>
+              <FileText size={22} />
+            </div>
+            <h3 style={{ fontSize: '1.15rem', fontWeight: 700, color: 'var(--text-main)', marginBottom: '0.5rem' }}>
+              ATS Resume &amp; Gmail Direct
+            </h3>
+            <p style={{ fontSize: '0.88rem', color: 'var(--text-secondary)', lineHeight: 1.6, margin: 0 }}>
+              Host your PDF resume with direct 1-click recruiter downloads and contact links that redirect straight to Gmail web compose.
+            </p>
+          </div>
+        </div>
+      </section>
+
+      {/* ================= 3-STEP WORKFLOW ================= */}
+      <section className="landing-section" style={{ paddingTop: '0.5rem', paddingBottom: '3.5rem' }}>
         <div className="section-header">
           <div className="section-tag">
             <Sliders size={14} />
@@ -349,28 +478,32 @@ export const HomePage = ({ onNavigate }) => {
         </div>
 
         <div className="how-it-works-grid">
-          {steps.map((step) => (
-            <div
-              key={step.number}
-              className="step-card"
-              onClick={() => onNavigate('login')}
-              style={{ cursor: 'pointer' }}
-              title="Click to sign in and begin"
-            >
-              <div className="step-number-badge">{step.number}</div>
-              <h3 className="step-title">{step.title}</h3>
-              <p className="step-desc">{step.desc}</p>
-            </div>
-          ))}
+          <div className="step-card" onClick={() => onNavigate('register')} style={{ cursor: 'pointer' }}>
+            <div className="step-number-badge">1</div>
+            <h3 className="step-title">Create Account</h3>
+            <p className="step-desc">Sign up in seconds and claim your unique profile slug.</p>
+          </div>
+
+          <div className="step-card" onClick={() => onNavigate('register')} style={{ cursor: 'pointer' }}>
+            <div className="step-number-badge">2</div>
+            <h3 className="step-title">Add Projects &amp; Resume</h3>
+            <p className="step-desc">Add your live projects, technical skills, and upload your resume.</p>
+          </div>
+
+          <div className="step-card" onClick={() => onNavigate('register')} style={{ cursor: 'pointer' }}>
+            <div className="step-number-badge">3</div>
+            <h3 className="step-title">Pick Template &amp; Publish</h3>
+            <p className="step-desc">Select your preferred visual style and share your live portfolio link.</p>
+          </div>
         </div>
       </section>
 
       {/* ================= BOTTOM CTA & GMAIL CONTACT ================= */}
-      <section className="landing-section" style={{ paddingTop: '1rem', paddingBottom: '2.5rem' }}>
+      <section className="landing-section" style={{ paddingTop: '0.5rem', paddingBottom: '3rem' }}>
         <div className="landing-cta-banner">
-          <h2 className="cta-banner-title">Ready to Publish Your Portfolio?</h2>
+          <h2 className="cta-banner-title">Ready to Publish Your Standout Portfolio?</h2>
           <p className="cta-banner-desc">
-            Create an account, pick from 8 handcrafted templates, and share your personalized link with the world.
+            Create an account, choose from 8 handcrafted templates, and share your personalized link with the world.
           </p>
           <div style={{ display: 'flex', justifyContent: 'center', gap: '1rem', flexWrap: 'wrap', marginBottom: '1.5rem' }}>
             <button
