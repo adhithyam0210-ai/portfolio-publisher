@@ -3,6 +3,7 @@ import { useAuth } from '../context/AuthContext';
 import { useToast } from '../context/ToastContext';
 import { Eye, EyeOff, ArrowLeft, Layers, AlertCircle, Check, X } from 'lucide-react';
 import { validatePasswordStrength } from '../utils/url';
+import { GoogleAuthModal } from '../components/auth/GoogleAuthModal';
 
 export const RegisterPage = ({ onNavigate }) => {
   const { register, loginWithGoogle } = useAuth();
@@ -28,9 +29,10 @@ export const RegisterPage = ({ onNavigate }) => {
   });
 
   const [submitting, setSubmitting] = useState(false);
+  const [isGoogleModalOpen, setIsGoogleModalOpen] = useState(false);
 
-  // Live password strength checks
-  const passAnalysis = validatePasswordStrength(password);
+  // Real-time password criteria evaluation
+  const passwordCriteria = validatePasswordStrength(password);
 
   const validateField = (field, value) => {
     let err = '';
@@ -52,19 +54,22 @@ export const RegisterPage = ({ onNavigate }) => {
         }
       }
     } else if (field === 'phone') {
-      const clean = value.replace(/\D/g, '');
+      const clean = value.trim();
       if (!clean) {
-        err = 'Phone number is required.';
-      } else if (clean.length !== 10) {
-        err = 'Phone number must be exactly 10 digits.';
+        err = 'Mobile number is required.';
+      } else {
+        const cleanDigits = clean.replace(/[\s\-()]/g, '');
+        if (!/^\+?[0-9]{10,15}$/.test(cleanDigits)) {
+          err = 'Please enter a valid 10-digit mobile number.';
+        }
       }
     } else if (field === 'password') {
       if (!value) {
         err = 'Password is required.';
       } else {
-        const check = validatePasswordStrength(value);
-        if (!check.isValid) {
-          err = check.message;
+        const crit = validatePasswordStrength(value);
+        if (!crit.isValid) {
+          err = 'Password does not meet all security requirements listed below.';
         }
       }
     } else if (field === 'confirmPassword') {
@@ -81,36 +86,36 @@ export const RegisterPage = ({ onNavigate }) => {
   const handleNameChange = (e) => {
     const val = e.target.value;
     setFullName(val);
-    if (errors.fullName) validateField('fullName', val);
+    if (errors.fullName) setErrors((prev) => ({ ...prev, fullName: '' }));
   };
 
   const handleEmailChange = (e) => {
     const val = e.target.value;
     setEmail(val);
-    if (errors.email) validateField('email', val);
+    if (errors.email) setErrors((prev) => ({ ...prev, email: '' }));
   };
 
   const handlePhoneChange = (e) => {
-    const digitsOnly = e.target.value.replace(/\D/g, '').slice(0, 10);
-    setPhone(digitsOnly);
-    if (errors.phone) validateField('phone', digitsOnly);
+    const val = e.target.value;
+    setPhone(val);
+    if (errors.phone) setErrors((prev) => ({ ...prev, phone: '' }));
   };
 
   const handlePasswordChange = (e) => {
     const val = e.target.value;
     setPassword(val);
-    if (errors.password) validateField('password', val);
-    if (confirmPassword && errors.confirmPassword) {
-      if (confirmPassword === val) {
-        setErrors((prev) => ({ ...prev, confirmPassword: '' }));
-      }
+    if (errors.password) setErrors((prev) => ({ ...prev, password: '' }));
+    if (confirmPassword && val !== confirmPassword) {
+      setErrors((prev) => ({ ...prev, confirmPassword: 'Passwords do not match.' }));
+    } else if (confirmPassword && val === confirmPassword) {
+      setErrors((prev) => ({ ...prev, confirmPassword: '' }));
     }
   };
 
   const handleConfirmPasswordChange = (e) => {
     const val = e.target.value;
     setConfirmPassword(val);
-    if (errors.confirmPassword) validateField('confirmPassword', val);
+    if (errors.confirmPassword) setErrors((prev) => ({ ...prev, confirmPassword: '' }));
   };
 
   const handleSubmit = async (e) => {
@@ -126,16 +131,20 @@ export const RegisterPage = ({ onNavigate }) => {
       return;
     }
 
+    const cleanName = fullName.trim();
+    let generatedUsername = cleanName.toLowerCase().replace(/[^a-z0-9]/g, '-');
+    if (generatedUsername.length < 3) {
+      generatedUsername = `user-${Date.now().toString().slice(-4)}`;
+    }
+
     setSubmitting(true);
     try {
-      const cleanName = fullName.trim();
-      const usernameGen = cleanName.toLowerCase().replace(/[^a-z0-9]/g, '-') + '-' + Math.floor(100 + Math.random() * 900);
       await register({
-        username: usernameGen,
-        email: email.trim(),
+        username: generatedUsername,
+        email: email.trim().toLowerCase(),
         password,
         fullName: cleanName,
-        phone
+        phone: phone.trim()
       });
       toast.success(`Welcome to PortfolioCraft, ${cleanName}!`);
       onNavigate('dashboard');
@@ -146,16 +155,15 @@ export const RegisterPage = ({ onNavigate }) => {
     }
   };
 
-  const handleGoogleSignUp = async () => {
-    const defaultEmail = prompt('Enter your Google email to sign up:', 'user@gmail.com');
-    if (!defaultEmail || !defaultEmail.includes('@')) return;
+  const handleGoogleAccountSelect = async (account) => {
     setSubmitting(true);
     try {
       const loggedUser = await loginWithGoogle({
-        email: defaultEmail.trim(),
-        name: defaultEmail.split('@')[0],
-        picture: 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=150&auto=format&fit=crop&q=80'
+        email: account.email.trim(),
+        name: account.name || account.email.split('@')[0],
+        picture: account.picture || ''
       });
+      setIsGoogleModalOpen(false);
       toast.success(`Registered with Google as ${loggedUser.email}!`);
       onNavigate('dashboard');
     } catch (err) {
@@ -269,7 +277,7 @@ export const RegisterPage = ({ onNavigate }) => {
             </label>
             <input
               type="text"
-              placeholder="e.g. Adhithya M"
+              placeholder="e.g. Alex Rivera"
               value={fullName}
               onChange={handleNameChange}
               onBlur={() => validateField('fullName', fullName)}
@@ -553,7 +561,8 @@ export const RegisterPage = ({ onNavigate }) => {
         {/* Continue with Google */}
         <button
           type="button"
-          onClick={handleGoogleSignUp}
+          onClick={() => setIsGoogleModalOpen(true)}
+          disabled={submitting}
           style={{
             width: '100%',
             background: 'var(--bg-surface)',
@@ -582,6 +591,13 @@ export const RegisterPage = ({ onNavigate }) => {
           <span>Continue with Google</span>
         </button>
       </div>
+
+      <GoogleAuthModal
+        isOpen={isGoogleModalOpen}
+        onClose={() => setIsGoogleModalOpen(false)}
+        onSelectAccount={handleGoogleAccountSelect}
+        loading={submitting}
+      />
     </div>
   );
 };

@@ -39,7 +39,13 @@ export const PortfolioRenderer = ({ data }) => {
 
   const styleWrapper = {
     '--user-accent': accentColor,
+    '--accent-primary': accentColor,
+    '--accent-primary-hover': accentColor,
+    '--accent-secondary': accentColor,
     '--primary': accentColor,
+    '--primary-hover': accentColor,
+    '--link-color': accentColor,
+    '--tc-accent': accentColor,
     '--portfolio-font': `"${fontFamily}", system-ui, -apple-system, sans-serif`,
     fontFamily: `"${fontFamily}", system-ui, -apple-system, sans-serif`
   };

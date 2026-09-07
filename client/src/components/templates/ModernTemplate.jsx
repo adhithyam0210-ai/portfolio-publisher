@@ -79,9 +79,9 @@ export const ModernTemplate = ({ data, theme = 'dark' }) => {
             {(profile.full_name || 'U').charAt(0).toUpperCase()}
           </div>
 
-          <div style={{ flex: 1, minWidth: '260px' }}>
+          <div className="tm-hero-content" style={{ flex: 1, minWidth: 0, width: '100%' }}>
             {/* Status & Location Row */}
-            <div style={{ display: 'flex', alignItems: 'center', gap: '0.65rem', flexWrap: 'wrap', marginBottom: '0.65rem' }}>
+            <div className="tm-hero-meta" style={{ display: 'flex', alignItems: 'center', gap: '0.65rem', flexWrap: 'wrap', marginBottom: '0.65rem' }}>
               {(profile.show_availability_badge !== false && profile.show_availability_badge !== 0) && (
                 <div className="tm-status-pill">
                   <span className="status-dot" />
@@ -202,17 +202,17 @@ export const ModernTemplate = ({ data, theme = 'dark' }) => {
         {/* 3. Featured Projects with Search */}
         {showSection('projects') && projects.length > 0 && (
           <section>
-            <div className="portfolio-section-head" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '1rem', marginBottom: '1.25rem' }}>
+            <div className="portfolio-section-head tm-projects-header" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '1rem', marginBottom: '1.25rem' }}>
               <div>
                 <h3 className="portfolio-section-title">Featured Projects</h3>
                 <span className="portfolio-section-subtitle">Real-world systems, applications &amp; tooling</span>
               </div>
 
-              <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+              <div className="tm-projects-filter-wrap" style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', flexWrap: 'wrap' }}>
                 <span style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>
                   {filteredProjects.length} of {projects.length} displayed
                 </span>
-                <div style={{ position: 'relative', minWidth: '220px' }}>
+                <div className="tm-projects-search-box" style={{ position: 'relative', minWidth: '180px' }}>
                   <Search size={14} style={{ position: 'absolute', left: '10px', top: '50%', transform: 'translateY(-50%)', color: 'var(--text-muted)' }} />
                   <input
                     type="text"

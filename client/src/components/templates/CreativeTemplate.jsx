@@ -69,8 +69,8 @@ export const CreativeTemplate = ({ data, theme = 'dark' }) => {
                   href={getGmailComposeUrl(profile.email || data.user?.email, `Inquiry for ${profile.full_name || ''}`)}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="btn btn-secondary btn-md"
-                  style={{ display: 'inline-flex', alignItems: 'center', gap: '0.45rem' }}
+                  className="btn btn-primary btn-md"
+                  style={{ display: 'inline-flex', alignItems: 'center', gap: '0.45rem', background: 'var(--user-accent, var(--tc-accent))', color: '#ffffff', border: 'none' }}
                 >
                   <Mail size={16} /> Contact Me (Gmail)
                 </a>

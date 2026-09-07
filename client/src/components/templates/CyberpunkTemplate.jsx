@@ -118,7 +118,7 @@ export const CyberpunkTemplate = ({ data, theme = 'dark' }) => {
               <h1 style={{ fontSize: 'clamp(1.8rem, 3.5vw, 2.4rem)', fontWeight: 900, letterSpacing: '-0.02em', margin: '0 0 0.3rem' }}>
                 {profile.full_name || 'System Operative'}
               </h1>
-              <h2 style={{ fontSize: '1.05rem', fontWeight: 600, color: '#06b6d4', margin: '0 0 0.75rem', fontFamily: 'monospace' }}>
+              <h2 style={{ fontSize: '1.05rem', fontWeight: 600, color: 'var(--user-accent, #06b6d4)', margin: '0 0 0.75rem', fontFamily: 'monospace' }}>
                 &gt; {profile.professional_title || 'Software Architect'}
               </h2>
               {profile.short_intro && (
@@ -141,8 +141,8 @@ export const CyberpunkTemplate = ({ data, theme = 'dark' }) => {
                   alignItems: 'center',
                   gap: '0.45rem',
                   padding: '0.55rem 1.15rem',
-                  background: '#06b6d4',
-                  color: '#07070b',
+                  background: 'var(--user-accent, #06b6d4)',
+                  color: '#ffffff',
                   fontWeight: 800,
                   fontSize: '0.85rem',
                   borderRadius: '6px',
@@ -322,7 +322,7 @@ export const CyberpunkTemplate = ({ data, theme = 'dark' }) => {
                         </a>
                       )}
                       {p.live_url && (
-                        <a href={p.live_url} target="_blank" rel="noreferrer" className="btn btn-primary btn-sm" style={{ flex: 1, fontSize: '0.76rem', borderRadius: '4px', background: '#06b6d4', color: '#07070b' }}>
+                        <a href={p.live_url} target="_blank" rel="noreferrer" className="btn btn-primary btn-sm" style={{ flex: 1, fontSize: '0.76rem', borderRadius: '4px', background: 'var(--user-accent, #06b6d4)', color: '#ffffff' }}>
                           <ExternalLink size={13} /> Launch
                         </a>
                       )}

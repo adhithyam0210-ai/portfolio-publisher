@@ -3,6 +3,8 @@ import { useAuth } from '../context/AuthContext';
 import { useToast } from '../context/ToastContext';
 import { Eye, EyeOff, ArrowLeft, Layers, AlertCircle, Sparkles, FolderGit2, Share2 } from 'lucide-react';
 
+import { GoogleAuthModal } from '../components/auth/GoogleAuthModal';
+
 export const LoginPage = ({ onNavigate }) => {
   const { user, login, loginWithGoogle, logout } = useAuth();
   const toast = useToast();
@@ -12,6 +14,7 @@ export const LoginPage = ({ onNavigate }) => {
   const [showPassword, setShowPassword] = useState(false);
   const [rememberMe, setRememberMe] = useState(false);
   const [submitting, setSubmitting] = useState(false);
+  const [isGoogleModalOpen, setIsGoogleModalOpen] = useState(false);
 
   // Inline errors state & general banner error
   const [errors, setErrors] = useState({ identifier: '', password: '' });
@@ -90,16 +93,15 @@ export const LoginPage = ({ onNavigate }) => {
     }
   };
 
-  const handleGoogleSignIn = async () => {
-    const defaultEmail = prompt('Enter your Google email to sign in:', 'user@gmail.com');
-    if (!defaultEmail || !defaultEmail.includes('@')) return;
+  const handleGoogleAccountSelect = async (account) => {
     setSubmitting(true);
     try {
       const loggedUser = await loginWithGoogle({
-        email: defaultEmail.trim(),
-        name: defaultEmail.split('@')[0],
-        picture: 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=150&auto=format&fit=crop&q=80'
+        email: account.email.trim(),
+        name: account.name || account.email.split('@')[0],
+        picture: account.picture || ''
       });
+      setIsGoogleModalOpen(false);
       toast.success(`Signed in as ${loggedUser.email}!`);
       if (loggedUser.role === 'ADMIN') {
         onNavigate('admin');
@@ -427,7 +429,8 @@ export const LoginPage = ({ onNavigate }) => {
         {/* Continue with Google Pill Button */}
         <button
           type="button"
-          onClick={handleGoogleSignIn}
+          onClick={() => setIsGoogleModalOpen(true)}
+          disabled={submitting}
           style={{
             width: '100%',
             background: 'var(--bg-surface)',
@@ -456,139 +459,14 @@ export const LoginPage = ({ onNavigate }) => {
           <span>Continue with Google</span>
         </button>
 
-        {/* "How It Works" Guide placed exactly where the demo buttons were */}
-        <div style={{
-          marginTop: '2rem',
-          paddingTop: '1.5rem',
-          borderTop: '1px solid var(--border-light)'
-        }}>
-          <div style={{
-            fontSize: '0.8rem',
-            fontWeight: 700,
-            color: 'var(--text-muted)',
-            textTransform: 'uppercase',
-            letterSpacing: '0.06em',
-            marginBottom: '1rem',
-            display: 'flex',
-            alignItems: 'center',
-            gap: '0.4rem'
-          }}>
-            <Sparkles size={14} color="var(--accent-primary)" />
-            <span>How PortfolioCraft Works</span>
-          </div>
-
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '0.85rem' }}>
-            {/* Step 1 */}
-            <div style={{
-              display: 'flex',
-              alignItems: 'flex-start',
-              gap: '0.75rem',
-              padding: '0.75rem 0.85rem',
-              borderRadius: '12px',
-              background: 'var(--bg-subtle)',
-              border: '1px solid var(--border-light)'
-            }}>
-              <div style={{
-                width: '24px',
-                height: '24px',
-                borderRadius: '6px',
-                background: 'rgba(5, 150, 105, 0.15)',
-                color: 'var(--accent-primary)',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                fontWeight: 700,
-                fontSize: '0.78rem',
-                flexShrink: 0,
-                marginTop: '1px'
-              }}>
-                1
-              </div>
-              <div style={{ flex: 1 }}>
-                <div style={{ fontSize: '0.84rem', fontWeight: 700, color: 'var(--text-main)', lineHeight: 1.3 }}>
-                  Sign in or Create Account
-                </div>
-                <div style={{ fontSize: '0.76rem', color: 'var(--text-secondary)', marginTop: '2px', lineHeight: 1.35 }}>
-                  Access your developer dashboard to manage profile details and resume.
-                </div>
-              </div>
-            </div>
-
-            {/* Step 2 */}
-            <div style={{
-              display: 'flex',
-              alignItems: 'flex-start',
-              gap: '0.75rem',
-              padding: '0.75rem 0.85rem',
-              borderRadius: '12px',
-              background: 'var(--bg-subtle)',
-              border: '1px solid var(--border-light)'
-            }}>
-              <div style={{
-                width: '24px',
-                height: '24px',
-                borderRadius: '6px',
-                background: 'rgba(99, 102, 241, 0.15)',
-                color: 'var(--primary)',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                fontWeight: 700,
-                fontSize: '0.78rem',
-                flexShrink: 0,
-                marginTop: '1px'
-              }}>
-                2
-              </div>
-              <div style={{ flex: 1 }}>
-                <div style={{ fontSize: '0.84rem', fontWeight: 700, color: 'var(--text-main)', lineHeight: 1.3 }}>
-                  Add Projects &amp; Skills
-                </div>
-                <div style={{ fontSize: '0.76rem', color: 'var(--text-secondary)', marginTop: '2px', lineHeight: 1.35 }}>
-                  Showcase your work with live preview links, GitHub repositories, and tech stacks.
-                </div>
-              </div>
-            </div>
-
-            {/* Step 3 */}
-            <div style={{
-              display: 'flex',
-              alignItems: 'flex-start',
-              gap: '0.75rem',
-              padding: '0.75rem 0.85rem',
-              borderRadius: '12px',
-              background: 'var(--bg-subtle)',
-              border: '1px solid var(--border-light)'
-            }}>
-              <div style={{
-                width: '24px',
-                height: '24px',
-                borderRadius: '6px',
-                background: 'rgba(245, 158, 11, 0.15)',
-                color: '#f59e0b',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                fontWeight: 700,
-                fontSize: '0.78rem',
-                flexShrink: 0,
-                marginTop: '1px'
-              }}>
-                3
-              </div>
-              <div style={{ flex: 1 }}>
-                <div style={{ fontSize: '0.84rem', fontWeight: 700, color: 'var(--text-main)', lineHeight: 1.3 }}>
-                  Choose Template &amp; Publish
-                </div>
-                <div style={{ fontSize: '0.76rem', color: 'var(--text-secondary)', marginTop: '2px', lineHeight: 1.35 }}>
-                  Pick from 8 distinct templates and share your personalized public portfolio link.
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-
       </div>
+
+      <GoogleAuthModal
+        isOpen={isGoogleModalOpen}
+        onClose={() => setIsGoogleModalOpen(false)}
+        onSelectAccount={handleGoogleAccountSelect}
+        loading={submitting}
+      />
     </div>
   );
 };
