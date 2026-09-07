@@ -154,7 +154,7 @@ export const BuilderPage = ({ initialTab = 'personal', onNavigate }) => {
       },
       customization: {
         template: currentData.portfolio?.template || 'modern',
-        theme: currentData.portfolio?.theme || 'dark',
+        theme: currentData.portfolio?.theme || 'light',
         font_family: currentData.portfolio?.font_family || 'Inter',
         accent_color: currentData.portfolio?.accent_color || '#6366f1',
         section_visibility: currentData.portfolio?.section_visibility || {}

@@ -14,7 +14,7 @@ export const PortfolioRenderer = ({ data }) => {
 
   const { portfolio = {} } = data;
   const templateName = portfolio.template || 'modern';
-  const theme = portfolio.theme || 'dark';
+  const theme = portfolio.theme || 'light';
   const accentColor = portfolio.accent_color || '#6366f1';
   const fontFamily = portfolio.font_family || 'Inter';
 

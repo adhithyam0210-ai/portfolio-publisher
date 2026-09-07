@@ -90,7 +90,7 @@ export const ShareModal = ({ isOpen, onClose, slug, title = "Share Your Portfoli
       name: 'Gmail',
       icon: Mail,
       color: '#EA4335',
-      url: getGmailComposeUrl('', 'My Professional Portfolio', `Check out my professional online portfolio: ${shareUrl}`)
+      url: getGmailComposeUrl('', 'My Professional Portfolio', `Check out my professional online portfolio: ${publicUrl}`)
     }
   ];
 

@@ -171,7 +171,7 @@ const SAMPLE_PORTFOLIO_BASE = {
 export const HomePage = ({ onNavigate }) => {
   // Active state for the interactive showcase
   const [activeTemplateId, setActiveTemplateId] = useState('bento');
-  const [activeTheme, setActiveTheme] = useState('dark');
+  const [activeTheme, setActiveTheme] = useState('light');
   const [activeViewport, setActiveViewport] = useState('desktop'); // desktop | tablet | mobile
 
   const activeTemplate = TEMPLATES_LIST.find((t) => t.id === activeTemplateId) || TEMPLATES_LIST[0];

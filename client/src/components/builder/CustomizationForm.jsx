@@ -78,7 +78,7 @@ const TEMPLATES = [
 
 export const CustomizationForm = ({ portfolio, onChange }) => {
   const currentTemplate = portfolio.template || 'modern';
-  const currentTheme = portfolio.theme || 'dark';
+  const currentTheme = portfolio.theme || 'light';
   const currentFont = portfolio.font_family || 'Inter';
   const currentAccent = portfolio.accent_color || '#6366f1';
 

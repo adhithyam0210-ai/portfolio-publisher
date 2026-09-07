@@ -15,7 +15,7 @@ import {
 
 export const Navbar = ({ activeTab, onNavigate }) => {
   const { user, isAdmin, logout } = useAuth();
-  const [theme, setTheme] = useState(localStorage.getItem('portfoliocraft_theme') || 'dark');
+  const [theme, setTheme] = useState(localStorage.getItem('portfoliocraft_theme') || 'light');
   const [isScrolled, setIsScrolled] = useState(false);
   const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
 
