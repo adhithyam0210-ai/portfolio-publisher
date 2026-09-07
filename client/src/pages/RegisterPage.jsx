@@ -1,7 +1,8 @@
 import React, { useState } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { useToast } from '../context/ToastContext';
-import { Eye, EyeOff, ArrowLeft, X, Layers, ChevronRight } from 'lucide-react';
+import { Eye, EyeOff, ArrowLeft, Layers, AlertCircle, Check, X } from 'lucide-react';
+import { validatePasswordStrength } from '../utils/url';
 
 export const RegisterPage = ({ onNavigate }) => {
   const { register, loginWithGoogle } = useAuth();
@@ -13,11 +14,11 @@ export const RegisterPage = ({ onNavigate }) => {
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
 
-  // Individual eye toggles for EACH masked field
+  // Eye toggles for password fields
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
-  // Inline errors state for every wrong field
+  // Inline errors state
   const [errors, setErrors] = useState({
     fullName: '',
     email: '',
@@ -27,8 +28,9 @@ export const RegisterPage = ({ onNavigate }) => {
   });
 
   const [submitting, setSubmitting] = useState(false);
-  const [isGoogleModalOpen, setIsGoogleModalOpen] = useState(false);
-  const [customGoogleEmail, setCustomGoogleEmail] = useState('');
+
+  // Live password strength checks
+  const passAnalysis = validatePasswordStrength(password);
 
   const validateField = (field, value) => {
     let err = '';
@@ -46,7 +48,7 @@ export const RegisterPage = ({ onNavigate }) => {
       } else {
         const emailRegex = /^[^\s@]+@[^\s@]+\.[a-zA-Z]{2,}$/;
         if (!emailRegex.test(clean)) {
-          err = 'Please enter a valid email address (e.g. name@gmail.com).';
+          err = 'Please enter a valid email address (e.g. name@example.com).';
         }
       }
     } else if (field === 'phone') {
@@ -54,13 +56,16 @@ export const RegisterPage = ({ onNavigate }) => {
       if (!clean) {
         err = 'Phone number is required.';
       } else if (clean.length !== 10) {
-        err = 'Phone number must be exactly 10 digits (numbers only).';
+        err = 'Phone number must be exactly 10 digits.';
       }
     } else if (field === 'password') {
       if (!value) {
         err = 'Password is required.';
-      } else if (value.length < 6) {
-        err = 'Password must be at least 6 characters.';
+      } else {
+        const check = validatePasswordStrength(value);
+        if (!check.isValid) {
+          err = check.message;
+        }
       }
     } else if (field === 'confirmPassword') {
       if (!value) {
@@ -86,7 +91,6 @@ export const RegisterPage = ({ onNavigate }) => {
   };
 
   const handlePhoneChange = (e) => {
-    // Strictly accept only numbers (no alpha), maximum 10 digits
     const digitsOnly = e.target.value.replace(/\D/g, '').slice(0, 10);
     setPhone(digitsOnly);
     if (errors.phone) validateField('phone', digitsOnly);
@@ -142,15 +146,16 @@ export const RegisterPage = ({ onNavigate }) => {
     }
   };
 
-  const executeGoogleAuth = async (email, name, picture) => {
+  const handleGoogleSignUp = async () => {
+    const defaultEmail = prompt('Enter your Google email to sign up:', 'user@gmail.com');
+    if (!defaultEmail || !defaultEmail.includes('@')) return;
     setSubmitting(true);
     try {
       const loggedUser = await loginWithGoogle({
-        email,
-        name,
-        picture: picture || 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150&auto=format&fit=crop&q=80'
+        email: defaultEmail.trim(),
+        name: defaultEmail.split('@')[0],
+        picture: 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=150&auto=format&fit=crop&q=80'
       });
-      setIsGoogleModalOpen(false);
       toast.success(`Registered with Google as ${loggedUser.email}!`);
       onNavigate('dashboard');
     } catch (err) {
@@ -185,7 +190,7 @@ export const RegisterPage = ({ onNavigate }) => {
           fontWeight: 600,
           marginBottom: '1.25rem',
           width: '100%',
-          maxWidth: '450px',
+          maxWidth: '460px',
           transition: 'color 0.15s ease'
         }}
         onMouseEnter={(e) => (e.currentTarget.style.color = 'var(--accent-primary)')}
@@ -198,10 +203,10 @@ export const RegisterPage = ({ onNavigate }) => {
       {/* Main Card */}
       <div style={{
         width: '100%',
-        maxWidth: '450px',
+        maxWidth: '460px',
         background: 'var(--bg-card)',
         border: '1px solid var(--border-light)',
-        borderRadius: '20px',
+        borderRadius: '24px',
         padding: '2.5rem 2.25rem',
         boxShadow: 'var(--shadow-card)'
       }}>
@@ -227,13 +232,13 @@ export const RegisterPage = ({ onNavigate }) => {
 
         {/* Title & Subtitle */}
         <h1 style={{
-          fontSize: '2.1rem',
+          fontSize: '2rem',
           fontWeight: 800,
           color: 'var(--text-main)',
           marginBottom: '0.35rem',
           letterSpacing: '-0.025em'
         }}>
-          Sign up
+          Create account
         </h1>
 
         <p style={{ fontSize: '0.88rem', color: 'var(--text-secondary)', marginBottom: '1.5rem' }}>
@@ -256,7 +261,7 @@ export const RegisterPage = ({ onNavigate }) => {
         </p>
 
         {/* Signup Form */}
-        <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '1.1rem' }}>
+        <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '1.15rem' }}>
           {/* Full Name */}
           <div>
             <label style={{ display: 'block', fontSize: '0.84rem', fontWeight: 600, color: 'var(--text-secondary)', marginBottom: '0.35rem' }}>
@@ -268,6 +273,7 @@ export const RegisterPage = ({ onNavigate }) => {
               value={fullName}
               onChange={handleNameChange}
               onBlur={() => validateField('fullName', fullName)}
+              className={`form-input-standard ${errors.fullName ? 'has-error' : ''}`}
               style={{
                 width: '100%',
                 padding: '0.75rem 1rem',
@@ -286,7 +292,7 @@ export const RegisterPage = ({ onNavigate }) => {
             />
             {errors.fullName && (
               <div style={{ color: '#ef4444', fontSize: '0.78rem', marginTop: '0.35rem', fontWeight: 500, display: 'flex', alignItems: 'center', gap: '0.3rem' }}>
-                <span>⚠️</span>
+                <AlertCircle size={13} style={{ flexShrink: 0 }} />
                 <span>{errors.fullName}</span>
               </div>
             )}
@@ -295,14 +301,15 @@ export const RegisterPage = ({ onNavigate }) => {
           {/* Email */}
           <div>
             <label style={{ display: 'block', fontSize: '0.84rem', fontWeight: 600, color: 'var(--text-secondary)', marginBottom: '0.35rem' }}>
-              E-mail
+              Email address
             </label>
             <input
               type="email"
-              placeholder="e.g. name@gmail.com"
+              placeholder="name@example.com"
               value={email}
               onChange={handleEmailChange}
               onBlur={() => validateField('email', email)}
+              className={`form-input-standard ${errors.email ? 'has-error' : ''}`}
               style={{
                 width: '100%',
                 padding: '0.75rem 1rem',
@@ -321,13 +328,13 @@ export const RegisterPage = ({ onNavigate }) => {
             />
             {errors.email && (
               <div style={{ color: '#ef4444', fontSize: '0.78rem', marginTop: '0.35rem', fontWeight: 500, display: 'flex', alignItems: 'center', gap: '0.3rem' }}>
-                <span>⚠️</span>
+                <AlertCircle size={13} style={{ flexShrink: 0 }} />
                 <span>{errors.email}</span>
               </div>
             )}
           </div>
 
-          {/* Phone Number (Strictly numbers only, exactly 10 digits) */}
+          {/* Phone Number */}
           <div>
             <label style={{ display: 'block', fontSize: '0.84rem', fontWeight: 600, color: 'var(--text-secondary)', marginBottom: '0.35rem' }}>
               Phone number
@@ -336,10 +343,11 @@ export const RegisterPage = ({ onNavigate }) => {
               type="text"
               inputMode="numeric"
               pattern="[0-9]*"
-              placeholder="e.g. 9876543210 (10 digits)"
+              placeholder="10-digit mobile number"
               value={phone}
               onChange={handlePhoneChange}
               onBlur={() => validateField('phone', phone)}
+              className={`form-input-standard ${errors.phone ? 'has-error' : ''}`}
               style={{
                 width: '100%',
                 padding: '0.75rem 1rem',
@@ -358,13 +366,13 @@ export const RegisterPage = ({ onNavigate }) => {
             />
             {errors.phone && (
               <div style={{ color: '#ef4444', fontSize: '0.78rem', marginTop: '0.35rem', fontWeight: 500, display: 'flex', alignItems: 'center', gap: '0.3rem' }}>
-                <span>⚠️</span>
+                <AlertCircle size={13} style={{ flexShrink: 0 }} />
                 <span>{errors.phone}</span>
               </div>
             )}
           </div>
 
-          {/* Password with its OWN individual eye toggle */}
+          {/* Password with eye toggle & live requirements checklist */}
           <div>
             <label style={{ display: 'block', fontSize: '0.84rem', fontWeight: 600, color: 'var(--text-secondary)', marginBottom: '0.35rem' }}>
               Password
@@ -372,10 +380,11 @@ export const RegisterPage = ({ onNavigate }) => {
             <div style={{ position: 'relative' }}>
               <input
                 type={showPassword ? 'text' : 'password'}
-                placeholder="At least 6 characters"
+                placeholder="Create a strong password"
                 value={password}
                 onChange={handlePasswordChange}
                 onBlur={() => validateField('password', password)}
+                className={`form-input-standard ${errors.password ? 'has-error' : ''}`}
                 style={{
                   width: '100%',
                   padding: '0.75rem 2.8rem 0.75rem 1rem',
@@ -391,6 +400,7 @@ export const RegisterPage = ({ onNavigate }) => {
                   e.target.style.borderColor = errors.password ? '#ef4444' : 'var(--accent-primary)';
                   e.target.style.boxShadow = errors.password ? '0 0 0 3px rgba(239, 68, 68, 0.15)' : '0 0 0 3px rgba(5, 150, 105, 0.15)';
                 }}
+                autoComplete="new-password"
               />
               <button
                 type="button"
@@ -413,15 +423,41 @@ export const RegisterPage = ({ onNavigate }) => {
                 {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
               </button>
             </div>
+
+            {/* Standardized Password Requirements Box */}
+            <div className="password-requirements-box" style={{ marginTop: '0.5rem' }}>
+              <div style={{ fontSize: '0.76rem', fontWeight: 700, color: 'var(--text-secondary)', marginBottom: '0.35rem' }}>
+                Password must meet:
+              </div>
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '0.35rem' }}>
+                <div className={`password-req-item ${passAnalysis.rules.length ? 'met' : ''}`}>
+                  {passAnalysis.rules.length ? <Check size={12} /> : <span style={{ width: '12px' }}>•</span>}
+                  <span>Min 8 characters</span>
+                </div>
+                <div className={`password-req-item ${passAnalysis.rules.uppercase ? 'met' : ''}`}>
+                  {passAnalysis.rules.uppercase ? <Check size={12} /> : <span style={{ width: '12px' }}>•</span>}
+                  <span>1 uppercase letter</span>
+                </div>
+                <div className={`password-req-item ${passAnalysis.rules.number ? 'met' : ''}`}>
+                  {passAnalysis.rules.number ? <Check size={12} /> : <span style={{ width: '12px' }}>•</span>}
+                  <span>1 number</span>
+                </div>
+                <div className={`password-req-item ${passAnalysis.rules.special ? 'met' : ''}`}>
+                  {passAnalysis.rules.special ? <Check size={12} /> : <span style={{ width: '12px' }}>•</span>}
+                  <span>1 special character</span>
+                </div>
+              </div>
+            </div>
+
             {errors.password && (
               <div style={{ color: '#ef4444', fontSize: '0.78rem', marginTop: '0.35rem', fontWeight: 500, display: 'flex', alignItems: 'center', gap: '0.3rem' }}>
-                <span>⚠️</span>
+                <AlertCircle size={13} style={{ flexShrink: 0 }} />
                 <span>{errors.password}</span>
               </div>
             )}
           </div>
 
-          {/* Confirm Password with its OWN individual eye toggle */}
+          {/* Confirm Password */}
           <div>
             <label style={{ display: 'block', fontSize: '0.84rem', fontWeight: 600, color: 'var(--text-secondary)', marginBottom: '0.35rem' }}>
               Confirm Password
@@ -433,6 +469,7 @@ export const RegisterPage = ({ onNavigate }) => {
                 value={confirmPassword}
                 onChange={handleConfirmPasswordChange}
                 onBlur={() => validateField('confirmPassword', confirmPassword)}
+                className={`form-input-standard ${errors.confirmPassword ? 'has-error' : ''}`}
                 style={{
                   width: '100%',
                   padding: '0.75rem 2.8rem 0.75rem 1rem',
@@ -448,6 +485,7 @@ export const RegisterPage = ({ onNavigate }) => {
                   e.target.style.borderColor = errors.confirmPassword ? '#ef4444' : 'var(--accent-primary)';
                   e.target.style.boxShadow = errors.confirmPassword ? '0 0 0 3px rgba(239, 68, 68, 0.15)' : '0 0 0 3px rgba(5, 150, 105, 0.15)';
                 }}
+                autoComplete="new-password"
               />
               <button
                 type="button"
@@ -472,13 +510,13 @@ export const RegisterPage = ({ onNavigate }) => {
             </div>
             {errors.confirmPassword && (
               <div style={{ color: '#ef4444', fontSize: '0.78rem', marginTop: '0.35rem', fontWeight: 500, display: 'flex', alignItems: 'center', gap: '0.3rem' }}>
-                <span>⚠️</span>
+                <AlertCircle size={13} style={{ flexShrink: 0 }} />
                 <span>{errors.confirmPassword}</span>
               </div>
             )}
           </div>
 
-          {/* Pill Sign Up Button */}
+          {/* Submit Button */}
           <button
             type="submit"
             disabled={submitting}
@@ -512,10 +550,10 @@ export const RegisterPage = ({ onNavigate }) => {
           <div style={{ flex: 1, height: '1px', background: 'var(--border-light)' }} />
         </div>
 
-        {/* Continue with Google Pill Button */}
+        {/* Continue with Google */}
         <button
           type="button"
-          onClick={() => setIsGoogleModalOpen(true)}
+          onClick={handleGoogleSignUp}
           style={{
             width: '100%',
             background: 'var(--bg-surface)',
@@ -535,279 +573,16 @@ export const RegisterPage = ({ onNavigate }) => {
           onMouseEnter={(e) => { e.currentTarget.style.borderColor = '#94a3b8'; e.currentTarget.style.background = 'var(--bg-subtle)'; }}
           onMouseLeave={(e) => { e.currentTarget.style.borderColor = 'var(--border-medium)'; e.currentTarget.style.background = 'var(--bg-surface)'; }}
         >
-          {/* Multi-colored Google G Icon */}
           <svg width="18" height="18" viewBox="0 0 24 24">
-            <path
-              fill="#4285F4"
-              d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"
-            />
-            <path
-              fill="#34A853"
-              d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"
-            />
-            <path
-              fill="#FBBC05"
-              d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.06H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.94l2.85-2.22.81-.63z"
-            />
-            <path
-              fill="#EA4335"
-              d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.06l3.66 2.84c.87-2.6 3.3-4.52 6.16-4.52z"
-            />
+            <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
+            <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
+            <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.06H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.94l2.85-2.22.81-.63z"/>
+            <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.06l3.66 2.84c.87-2.6 3.3-4.52 6.16-4.52z"/>
           </svg>
           <span>Continue with Google</span>
         </button>
       </div>
-
-      {/* Google Sign-In / Sign-Up Account Chooser Modal */}
-      {isGoogleModalOpen && (
-        <div style={{
-          position: 'fixed',
-          top: 0,
-          left: 0,
-          right: 0,
-          bottom: 0,
-          background: 'rgba(0, 0, 0, 0.6)',
-          backdropFilter: 'blur(5px)',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          zIndex: 9999,
-          padding: '1rem'
-        }}>
-          <div style={{
-            background: 'var(--bg-card)',
-            border: '1px solid var(--border-light)',
-            borderRadius: '24px',
-            padding: '2.25rem 2rem',
-            maxWidth: '430px',
-            width: '100%',
-            boxShadow: '0 24px 48px rgba(0,0,0,0.25)',
-            position: 'relative',
-            animation: 'modalSlideUp 0.2s ease-out'
-          }}>
-            {/* Close Button */}
-            <button
-              onClick={() => setIsGoogleModalOpen(false)}
-              style={{
-                position: 'absolute',
-                top: '18px',
-                right: '18px',
-                background: 'transparent',
-                border: 'none',
-                color: 'var(--text-muted)',
-                cursor: 'pointer',
-                padding: '4px',
-                borderRadius: '8px',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center'
-              }}
-            >
-              <X size={20} />
-            </button>
-
-            {/* Google Header */}
-            <div style={{ display: 'flex', alignItems: 'center', gap: '0.85rem', marginBottom: '1.5rem' }}>
-              <svg width="26" height="26" viewBox="0 0 24 24">
-                <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
-                <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
-                <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.06H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.94l2.85-2.22.81-.63z"/>
-                <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.06l3.66 2.84c.87-2.6 3.3-4.52 6.16-4.52z"/>
-              </svg>
-              <div>
-                <h3 style={{ margin: 0, fontSize: '1.2rem', fontWeight: 800, color: 'var(--text-main)', letterSpacing: '-0.02em' }}>
-                  Sign up with Google
-                </h3>
-                <span style={{ fontSize: '0.82rem', color: 'var(--text-secondary)' }}>
-                  Choose an account to continue to PortfolioCraft
-                </span>
-              </div>
-            </div>
-
-            {/* Quick 1-Click User Account Option Cards */}
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem', marginBottom: '1.5rem' }}>
-              {/* Account 1: Adhithya M */}
-              <div
-                onClick={() => executeGoogleAuth('adhithyam0210@gmail.com', 'Adhithya M', 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=150&auto=format&fit=crop&q=80')}
-                style={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: '0.9rem',
-                  padding: '0.85rem 1rem',
-                  border: '1.5px solid var(--border-medium)',
-                  borderRadius: '14px',
-                  background: 'var(--bg-subtle)',
-                  cursor: 'pointer',
-                  transition: 'all 0.18s ease'
-                }}
-                onMouseEnter={(e) => {
-                  e.currentTarget.style.borderColor = 'var(--accent-primary)';
-                  e.currentTarget.style.transform = 'translateY(-1px)';
-                  e.currentTarget.style.boxShadow = '0 4px 12px rgba(0,0,0,0.06)';
-                }}
-                onMouseLeave={(e) => {
-                  e.currentTarget.style.borderColor = 'var(--border-medium)';
-                  e.currentTarget.style.transform = 'translateY(0)';
-                  e.currentTarget.style.boxShadow = 'none';
-                }}
-              >
-                <div style={{ position: 'relative' }}>
-                  <img
-                    src="https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=150&auto=format&fit=crop&q=80"
-                    alt="Adhithya M"
-                    style={{
-                      width: '42px',
-                      height: '42px',
-                      borderRadius: '50%',
-                      objectFit: 'cover',
-                      border: '2px solid #ffffff',
-                      boxShadow: '0 2px 6px rgba(0,0,0,0.15)'
-                    }}
-                  />
-                  <div style={{
-                    position: 'absolute',
-                    bottom: '-2px',
-                    right: '-2px',
-                    width: '16px',
-                    height: '16px',
-                    borderRadius: '50%',
-                    background: '#ffffff',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    boxShadow: '0 1px 3px rgba(0,0,0,0.2)'
-                  }}>
-                    <svg width="10" height="10" viewBox="0 0 24 24">
-                      <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
-                      <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
-                      <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.06H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.94l2.85-2.22.81-.63z"/>
-                      <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.06l3.66 2.84c.87-2.6 3.3-4.52 6.16-4.52z"/>
-                    </svg>
-                  </div>
-                </div>
-                <div style={{ flex: 1, textAlign: 'left' }}>
-                  <div style={{ fontSize: '0.92rem', fontWeight: 700, color: 'var(--text-main)', lineHeight: 1.2 }}>
-                    Adhithya M
-                  </div>
-                  <div style={{ fontSize: '0.78rem', color: 'var(--text-secondary)' }}>
-                    adhithyam0210@gmail.com
-                  </div>
-                </div>
-                <ChevronRight size={18} color="var(--text-muted)" />
-              </div>
-
-              {/* Account 2: Adhithya */}
-              <div
-                onClick={() => executeGoogleAuth('adhithya@gmail.com', 'Adhithya', 'https://images.unsplash.com/photo-1570295999919-56ceb5ecca61?w=150&auto=format&fit=crop&q=80')}
-                style={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: '0.9rem',
-                  padding: '0.85rem 1rem',
-                  border: '1.5px solid var(--border-medium)',
-                  borderRadius: '14px',
-                  background: 'var(--bg-subtle)',
-                  cursor: 'pointer',
-                  transition: 'all 0.18s ease'
-                }}
-                onMouseEnter={(e) => {
-                  e.currentTarget.style.borderColor = 'var(--accent-primary)';
-                  e.currentTarget.style.transform = 'translateY(-1px)';
-                  e.currentTarget.style.boxShadow = '0 4px 12px rgba(0,0,0,0.06)';
-                }}
-                onMouseLeave={(e) => {
-                  e.currentTarget.style.borderColor = 'var(--border-medium)';
-                  e.currentTarget.style.transform = 'translateY(0)';
-                  e.currentTarget.style.boxShadow = 'none';
-                }}
-              >
-                <div style={{ position: 'relative' }}>
-                  <img
-                    src="https://images.unsplash.com/photo-1570295999919-56ceb5ecca61?w=150&auto=format&fit=crop&q=80"
-                    alt="Adhithya"
-                    style={{
-                      width: '42px',
-                      height: '42px',
-                      borderRadius: '50%',
-                      objectFit: 'cover',
-                      border: '2px solid #ffffff',
-                      boxShadow: '0 2px 6px rgba(0,0,0,0.15)'
-                    }}
-                  />
-                  <div style={{
-                    position: 'absolute',
-                    bottom: '-2px',
-                    right: '-2px',
-                    width: '16px',
-                    height: '16px',
-                    borderRadius: '50%',
-                    background: '#ffffff',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    boxShadow: '0 1px 3px rgba(0,0,0,0.2)'
-                  }}>
-                    <svg width="10" height="10" viewBox="0 0 24 24">
-                      <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
-                      <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
-                      <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.06H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.94l2.85-2.22.81-.63z"/>
-                      <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.06l3.66 2.84c.87-2.6 3.3-4.52 6.16-4.52z"/>
-                    </svg>
-                  </div>
-                </div>
-                <div style={{ flex: 1, textAlign: 'left' }}>
-                  <div style={{ fontSize: '0.92rem', fontWeight: 700, color: 'var(--text-main)', lineHeight: 1.2 }}>
-                    Adhithya
-                  </div>
-                  <div style={{ fontSize: '0.78rem', color: 'var(--text-secondary)' }}>
-                    adhithya@gmail.com
-                  </div>
-                </div>
-                <ChevronRight size={18} color="var(--text-muted)" />
-              </div>
-            </div>
-
-            {/* Custom Google Email Input */}
-            <div style={{ borderTop: '1px solid var(--border-light)', paddingTop: '1.25rem' }}>
-              <label style={{ display: 'block', fontSize: '0.82rem', fontWeight: 600, color: 'var(--text-secondary)', marginBottom: '0.45rem' }}>
-                Or enter another Google email:
-              </label>
-              <div style={{ display: 'flex', gap: '0.5rem' }}>
-                <input
-                  type="email"
-                  placeholder="e.g. name@gmail.com"
-                  value={customGoogleEmail}
-                  onChange={(e) => setCustomGoogleEmail(e.target.value)}
-                  style={{
-                    flex: 1,
-                    padding: '0.7rem 0.9rem',
-                    borderRadius: '10px',
-                    border: '1.5px solid var(--border-medium)',
-                    background: 'var(--bg-surface)',
-                    color: 'var(--text-main)',
-                    fontSize: '0.88rem',
-                    outline: 'none'
-                  }}
-                />
-                <button
-                  type="button"
-                  disabled={!customGoogleEmail.includes('@')}
-                  onClick={() => executeGoogleAuth(customGoogleEmail, customGoogleEmail.split('@')[0])}
-                  className="btn btn-primary btn-sm"
-                  style={{ borderRadius: '10px', padding: '0.7rem 1.25rem', fontWeight: 700 }}
-                >
-                  Continue
-                </button>
-              </div>
-            </div>
-
-            <p style={{ fontSize: '0.72rem', color: 'var(--text-muted)', marginTop: '1.25rem', marginBottom: 0, textAlign: 'center', lineHeight: 1.4 }}>
-              To continue, Google will verify your email and profile with PortfolioCraft.
-            </p>
-          </div>
-        </div>
-      )}
     </div>
   );
 };
-
+export default RegisterPage;

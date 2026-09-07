@@ -3,172 +3,144 @@ import {
   Layers,
   Sparkles,
   ArrowRight,
-  Shield,
   Code2,
   Palette,
   Globe,
   QrCode,
   FileText,
-  Smartphone,
-  Eye,
   CheckCircle2,
   Share2,
-  Users,
   LogIn,
   UserPlus,
-  LayoutDashboard,
   Zap,
   Sliders,
   ExternalLink,
-  Award
+  Mail,
+  Grid,
+  Cpu
 } from 'lucide-react';
+import { getGmailComposeUrl } from '../utils/url';
 
 export const HomePage = ({ onNavigate }) => {
-  // Feature Cards displaying what the project is
-  const projectFeatures = [
+  // Streamlined 4 Essential Core Pillars
+  const coreFeatures = [
     {
       id: 'builder',
-      title: 'Synchronized Multi-Step Builder',
-      badge: 'Interactive Editor',
+      title: 'Interactive Multi-Step Builder',
+      badge: 'Core Engine',
       icon: <Code2 size={24} />,
       description:
-        'A comprehensive step-by-step manager for your Bio, Work Experience, Education, Skills with 4 proficiency tiers, Certifications, and GitHub projects with zero coding required.',
-      actionHint: 'Click card to sign in & open builder'
+        'Craft your developer profile, skills, projects, and bio in real-time with instant live preview before publishing.'
     },
     {
       id: 'templates',
-      title: '4 Designer Portfolio Archetypes',
-      badge: 'Aesthetic Themes',
+      title: '8 Distinct Aesthetic Archetypes',
+      badge: 'Design System',
       icon: <Palette size={24} />,
       description:
-        'Switch seamlessly between Modern Glassmorphism, Executive Timeline, Swiss Minimalist, and Creative Flair layouts with custom accent swatches and dark/light modes.',
-      actionHint: 'Click card to sign in & customize styles'
+        'Choose from Bento Grid, Cyberpunk Neon, Modern Glass, Minimalist, Terminal, Editorial, and Neo-Brutalist layouts.'
     },
     {
       id: 'publishing',
       title: '1-Click Publishing & Custom Slug',
-      badge: 'Live Deployment',
+      badge: 'Instant Live',
       icon: <Globe size={24} />,
       description:
-        'Publish your portfolio instantly to a clean personalized URL (e.g. /portfolio/:username) with live status toggles between Published, Draft, and Unpublished modes.',
-      actionHint: 'Click card to sign in & claim your slug'
-    },
-    {
-      id: 'qrcode',
-      title: 'Dynamic QR Code & Social Sharing',
-      badge: 'Omnichannel Share',
-      icon: <QrCode size={24} />,
-      description:
-        'Generate high-resolution canvas QR codes for your resume and business cards with PNG download support and 1-click sharing to WhatsApp, LinkedIn, X, and Email.',
-      actionHint: 'Click card to sign in & generate QR code'
+        'Deploy your portfolio to a clean personalized URL (e.g. /portfolio/:username) with dynamic high-resolution QR codes.'
     },
     {
       id: 'resume',
-      title: 'ATS Resume Document Manager',
-      badge: 'Career Assets',
+      title: 'ATS Resume Document Hosting',
+      badge: 'Career Ready',
       icon: <FileText size={24} />,
       description:
-        'Upload and host PDF or DOCX resumes (up to 10MB) with recruiter-friendly preview, direct download links, and replacement or deletion controls.',
-      actionHint: 'Click card to sign in & upload resume'
-    },
-    {
-      id: 'governance',
-      title: 'Role-Based Platform Governance',
-      badge: 'Admin Telemetry',
-      icon: <Shield size={24} />,
-      description:
-        'Unified authentication with executive admin telemetry, user moderation, status activation/deactivation, administrative password resets, and portfolio audit trails.',
-      actionHint: 'Click card to sign in & test governance'
-    },
-    {
-      id: 'privacy',
-      title: 'Granular Privacy & Recruiter Controls',
-      badge: 'Data Security',
-      icon: <Eye size={24} />,
-      description:
-        'Protect your personal contact info with fine-grained visibility controls to show or hide your email address, phone number, and resume download permissions.',
-      actionHint: 'Click card to sign in & configure privacy'
-    },
-    {
-      id: 'responsive',
-      title: 'Multi-Device Viewport Switcher',
-      badge: '100% Responsive',
-      icon: <Smartphone size={24} />,
-      description:
-        'Live preview your portfolio across Desktop (100%), Tablet (768px), and Mobile (375px) in an isolated frame reflecting every edit before going public.',
-      actionHint: 'Click card to sign in & test responsiveness'
+        'Upload your PDF resume with direct one-click recruiter download, Gmail web compose contact, and privacy controls.'
     }
   ];
 
-  // 7 Designer Templates preview
+  // 8 Curated Templates showcase including the new Bento and Cyberpunk designs
   const templates = [
+    {
+      id: 'bento',
+      name: 'Bento Grid',
+      tagline: 'Modern modular Apple/Linear grid aesthetic',
+      accent: '#6366f1',
+      badge: 'Popular',
+      features: ['Curated bento tiles', 'Fluid responsive grid', 'Micro-interactions']
+    },
+    {
+      id: 'cyberpunk',
+      name: 'Cyberpunk HUD',
+      tagline: 'Neon cyan & magenta high-tech terminal',
+      accent: '#06b6d4',
+      badge: 'Futuristic',
+      features: ['Hacker HUD accents', 'Neon glow borders', 'Terminal console vibes']
+    },
     {
       id: 'modern',
       name: 'Modern Glass',
-      tagline: 'Glassmorphism cards & glowing neon gradients',
-      mockClass: 'mock-modern',
-      features: ['Frosted glass backdrop', 'Glowing tech chips', 'Sleek lift cards']
+      tagline: 'Glassmorphism cards & glowing gradients',
+      accent: '#10b981',
+      badge: 'Featured',
+      features: ['Frosted glass cards', 'Vibrant emerald glow', 'Sleek lift animation']
     },
     {
-      id: 'professional',
-      name: 'Executive Timeline',
-      tagline: 'Deep corporate palette & career milestones',
-      mockClass: 'mock-professional',
-      features: ['Structured milestones', 'Executive typography', 'Minimalist lines']
+      id: 'creative',
+      name: 'Creative Flair',
+      tagline: 'Warm gradients & asymmetric layouts',
+      accent: '#ec4899',
+      badge: 'Expressive',
+      features: ['Playful card depths', 'Warm sunset tones', 'Dynamic pill badges']
     },
     {
       id: 'minimal',
       name: 'Swiss Minimalist',
       tagline: 'High-contrast monochrome typography',
-      mockClass: 'mock-minimal',
-      features: ['Airy whitespace', 'Sharp borders', 'Editorial layout']
-    },
-    {
-      id: 'creative',
-      name: 'Creative Flair',
-      tagline: 'Vibrant gradients & playful asymmetrical cards',
-      mockClass: 'mock-creative',
-      features: ['Warm accent gradients', 'Dynamic avatars', 'Interactive badges']
+      accent: '#64748b',
+      badge: 'Clean',
+      features: ['High readability', 'Sharp border accents', 'Generous whitespace']
     },
     {
       id: 'terminal',
       name: 'Developer Terminal',
       tagline: 'Monospace hacker console & bash prompt',
-      mockClass: 'mock-terminal',
-      features: ['Bash command logs', 'Matrix green syntax', 'Git branch tags']
+      accent: '#22c55e',
+      badge: 'Geek',
+      features: ['Bash command style', 'Matrix green syntax', 'Git branch logs']
     },
     {
       id: 'editorial',
       name: 'Vogue Editorial',
-      tagline: 'Editorial magazine serif typography',
-      mockClass: 'mock-editorial',
-      features: ['Playfair Display', 'Gold luxury accents', 'Asymmetric spreads']
+      tagline: 'Editorial monograph serif typography',
+      accent: '#d97706',
+      badge: 'Luxury',
+      features: ['Playfair Display', 'Gold tone accents', 'Curated colophon']
     },
     {
       id: 'brutalist',
-      name: 'Neo-Brutalism Pop',
-      tagline: 'Bold 3px black borders & retro sticker badges',
-      mockClass: 'mock-brutalist',
-      features: ['Solid offset shadows', 'Pastel color blocks', 'Sticker badges']
+      name: 'Neo-Brutalism',
+      tagline: 'Bold 3px solid borders & sticker tabs',
+      accent: '#f59e0b',
+      badge: 'Bold',
+      features: ['Solid drop shadows', 'Vibrant pop colors', 'Marquee announcement']
     }
   ];
 
-  // How it works steps
   const steps = [
     {
       number: '1',
-      title: 'Create Your Account',
-      desc: 'Sign up in under 30 seconds to claim your unique profile slug and access your unified dashboard.'
+      title: 'Create Account',
+      desc: 'Sign up in seconds and claim your unique profile slug.'
     },
     {
       number: '2',
-      title: 'Add Details & Customize',
-      desc: 'Fill in your projects, skills, work history, and choose from 4 designer templates with live preview.'
+      title: 'Add Projects & Resume',
+      desc: 'Add your live projects, technical skills, and upload your resume.'
     },
     {
       number: '3',
-      title: 'Publish & Share Worldwide',
-      desc: 'Deploy with 1 click, print your dynamic QR code, and share your clean portfolio link with recruiters.'
+      title: 'Pick Template & Publish',
+      desc: 'Select your preferred visual style and share your live portfolio link.'
     }
   ];
 
@@ -182,111 +154,110 @@ export const HomePage = ({ onNavigate }) => {
         </div>
 
         <h1 className="landing-title">
-          Build, Customize &amp; Publish Your{' '}
+          Build &amp; Publish Your{' '}
           <span className="landing-title-gradient">Standout Portfolio</span>
         </h1>
 
         <p className="landing-subtitle">
-          An all-in-one developer and professional portfolio platform. Design your portfolio with real-time live preview,
-          choose between 4 distinct aesthetic templates, generate dynamic QR codes, host ATS resumes, and manage everything with built-in role-based governance.
+          Design a stunning developer portfolio with real-time live preview, 8 distinct aesthetic templates,
+          dynamic QR codes, and ATS-ready resume hosting in minutes.
         </p>
 
-        {/* Primary Action Buttons (Sign Up & Login) */}
+        {/* Primary Action Buttons */}
         <div className="landing-hero-actions">
           <button
             className="btn btn-primary btn-lg"
             onClick={() => onNavigate('register')}
-            style={{ fontSize: '1.05rem', padding: '0.85rem 1.85rem' }}
+            style={{ fontSize: '1.02rem', padding: '0.85rem 1.85rem' }}
           >
             <UserPlus size={19} />
-            <span>Create Free Portfolio (Sign Up)</span>
+            <span>Create Free Portfolio</span>
           </button>
 
           <button
             className="btn btn-secondary btn-lg"
             onClick={() => onNavigate('login')}
-            style={{ fontSize: '1.05rem', padding: '0.85rem 1.85rem' }}
+            style={{ fontSize: '1.02rem', padding: '0.85rem 1.85rem' }}
           >
             <LogIn size={19} />
-            <span>Sign In to Portal</span>
+            <span>Sign In</span>
           </button>
 
           <button
             className="btn btn-outline btn-lg"
             onClick={() => onNavigate('public', 'john-doe')}
-            title="View pre-published sample user portfolio"
-            style={{ fontSize: '1.05rem', padding: '0.85rem 1.5rem' }}
+            title="View sample live portfolio"
+            style={{ fontSize: '1.02rem', padding: '0.85rem 1.5rem' }}
           >
             <ExternalLink size={17} />
-            <span>View Live Demo Portfolio</span>
+            <span>Live Demo</span>
           </button>
         </div>
 
-        {/* Key Platform Highlights Bar */}
+        {/* Highlight Metrics */}
         <div className="landing-metrics-bar">
           <div className="metric-item">
             <div className="metric-icon-wrap">
-              <Palette size={22} />
+              <Palette size={20} />
             </div>
             <div>
-              <div className="metric-value">4 Archetypes</div>
-              <div className="metric-label">Designer Templates</div>
+              <div className="metric-value">8 Archetypes</div>
+              <div className="metric-label">Custom Templates</div>
             </div>
           </div>
 
           <div className="metric-item">
             <div className="metric-icon-wrap">
-              <Code2 size={22} />
+              <Code2 size={20} />
             </div>
             <div>
               <div className="metric-value">Live Sync</div>
-              <div className="metric-label">Real-Time Split Preview</div>
+              <div className="metric-label">Real-Time Preview</div>
             </div>
           </div>
 
           <div className="metric-item">
             <div className="metric-icon-wrap">
-              <QrCode size={22} />
+              <QrCode size={20} />
             </div>
             <div>
               <div className="metric-value">Dynamic QR</div>
-              <div className="metric-label">1-Click Omnichannel Share</div>
+              <div className="metric-label">Instant Share</div>
             </div>
           </div>
 
           <div className="metric-item">
             <div className="metric-icon-wrap">
-              <Shield size={22} />
+              <Globe size={20} />
             </div>
             <div>
-              <div className="metric-value">RBAC Security</div>
-              <div className="metric-label">Admin &amp; User Portals</div>
+              <div className="metric-value">1-Click Live</div>
+              <div className="metric-label">Clean URL Slug</div>
             </div>
           </div>
         </div>
       </section>
 
-      {/* ================= PLATFORM CAPABILITIES (CARDS STRUCTURE) ================= */}
+      {/* ================= ESSENTIAL CORE PILLARS ================= */}
       <section className="landing-section">
         <div className="section-header">
           <div className="section-tag">
             <Zap size={14} />
-            <span>Project Capabilities</span>
+            <span>Essential Features</span>
           </div>
-          <h2 className="section-title">Everything Built into PortfolioCraft</h2>
+          <h2 className="section-title">Everything You Need to Stand Out</h2>
           <p className="section-desc">
-            Explore what the project does in the interactive cards below. <strong>Click any card to go to the login page</strong> and test the features firsthand.
+            Focused, modern tools designed to present your professional journey with maximum visual impact.
           </p>
         </div>
 
-        {/* The Cards Grid - Clicking redirects to login page as requested */}
-        <div className="interactive-cards-grid">
-          {projectFeatures.map((feature) => (
+        <div className="interactive-cards-grid" style={{ gridTemplateColumns: 'repeat(auto-fit, minmax(260px, 1fr))' }}>
+          {coreFeatures.map((feature) => (
             <div
               key={feature.id}
               className="feature-interactive-card"
               onClick={() => onNavigate('login')}
-              title={`Click to sign in and test ${feature.title}`}
+              title={`Click to get started with ${feature.title}`}
             >
               <div>
                 <div className="card-top-row">
@@ -298,24 +269,24 @@ export const HomePage = ({ onNavigate }) => {
               </div>
 
               <div className="card-interactive-footer">
-                <span>{feature.actionHint}</span>
-                <ArrowRight size={16} />
+                <span>Try this feature</span>
+                <ArrowRight size={15} />
               </div>
             </div>
           ))}
         </div>
       </section>
 
-      {/* ================= 4 DESIGNER TEMPLATES SECTION ================= */}
-      <section className="landing-section" style={{ paddingTop: '1rem' }}>
+      {/* ================= 8 DISTINCT TEMPLATES SECTION ================= */}
+      <section className="landing-section" style={{ paddingTop: '1.5rem' }}>
         <div className="section-header">
           <div className="section-tag">
             <Palette size={14} />
-            <span>Showcase Aesthetics</span>
+            <span>Visual Themes</span>
           </div>
-          <h2 className="section-title">4 Distinct Template Archetypes</h2>
+          <h2 className="section-title">8 Working Visual Templates</h2>
           <p className="section-desc">
-            Crafted for developers, designers, and corporate executives. Click any template card to sign in and preview your content with that style.
+            Tailor your portfolio's personality to match your craft. Click any card to preview in your account.
           </p>
         </div>
 
@@ -325,17 +296,24 @@ export const HomePage = ({ onNavigate }) => {
               key={tmpl.id}
               className="template-card-preview"
               onClick={() => onNavigate('login')}
-              title={`Click to sign in and apply ${tmpl.name}`}
+              title={`Click to use the ${tmpl.name} template`}
             >
-              <div className={`template-visual-mock ${tmpl.mockClass}`}>
-                <span style={{ fontWeight: 800, fontSize: '1rem', letterSpacing: '0.04em' }}>{tmpl.name}</span>
-                <span style={{ fontSize: '0.75rem', opacity: 0.85, marginTop: '4px' }}>Live Responsive Theme</span>
+              <div 
+                className="template-visual-mock" 
+                style={{ 
+                  background: `linear-gradient(135deg, ${tmpl.accent}22, ${tmpl.accent}44)`,
+                  border: `1px solid ${tmpl.accent}55`,
+                  color: 'var(--text-main)'
+                }}
+              >
+                <span style={{ fontWeight: 800, fontSize: '1.05rem', letterSpacing: '-0.01em' }}>{tmpl.name}</span>
+                <span style={{ fontSize: '0.74rem', opacity: 0.85, marginTop: '4px' }}>{tmpl.badge} Theme</span>
               </div>
 
               <h4 style={{ fontSize: '1.1rem', fontWeight: 700, color: 'var(--text-main)', marginBottom: '0.35rem' }}>
                 {tmpl.name}
               </h4>
-              <p style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', marginBottom: '1rem' }}>
+              <p style={{ fontSize: '0.84rem', color: 'var(--text-secondary)', marginBottom: '1rem', minHeight: '38px' }}>
                 {tmpl.tagline}
               </p>
 
@@ -349,24 +327,24 @@ export const HomePage = ({ onNavigate }) => {
               </div>
 
               <div className="card-interactive-footer">
-                <span>Click to Sign In &amp; Use</span>
-                <ArrowRight size={15} />
+                <span>Select &amp; Apply</span>
+                <ArrowRight size={14} />
               </div>
             </div>
           ))}
         </div>
       </section>
 
-      {/* ================= HOW IT WORKS (3-STEP WORKFLOW) ================= */}
-      <section className="landing-section" style={{ paddingTop: '1rem' }}>
+      {/* ================= HOW IT WORKS (3 STEPS) ================= */}
+      <section className="landing-section" style={{ paddingTop: '1.5rem' }}>
         <div className="section-header">
           <div className="section-tag">
             <Sliders size={14} />
-            <span>Simple Workflow</span>
+            <span>Workflow</span>
           </div>
-          <h2 className="section-title">How It Works in 3 Simple Steps</h2>
+          <h2 className="section-title">How It Works</h2>
           <p className="section-desc">
-            From zero to a fully published online portfolio with a live link and scannable QR code.
+            Go live with your custom portfolio in 3 quick steps.
           </p>
         </div>
 
@@ -377,7 +355,7 @@ export const HomePage = ({ onNavigate }) => {
               className="step-card"
               onClick={() => onNavigate('login')}
               style={{ cursor: 'pointer' }}
-              title="Click to sign in"
+              title="Click to sign in and begin"
             >
               <div className="step-number-badge">{step.number}</div>
               <h3 className="step-title">{step.title}</h3>
@@ -387,21 +365,21 @@ export const HomePage = ({ onNavigate }) => {
         </div>
       </section>
 
-      {/* ================= BOTTOM CTA BANNER ================= */}
-      <section className="landing-section" style={{ paddingTop: '1rem', paddingBottom: '2rem' }}>
+      {/* ================= BOTTOM CTA & GMAIL CONTACT ================= */}
+      <section className="landing-section" style={{ paddingTop: '1rem', paddingBottom: '2.5rem' }}>
         <div className="landing-cta-banner">
-          <h2 className="cta-banner-title">Ready to Publish Your Standout Portfolio?</h2>
+          <h2 className="cta-banner-title">Ready to Publish Your Portfolio?</h2>
           <p className="cta-banner-desc">
-            Join developers, designers, and engineers showcasing their work with custom themes, live QR codes, and recruiter-friendly ATS resume hosting.
+            Create an account, pick from 8 handcrafted templates, and share your personalized link with the world.
           </p>
-          <div style={{ display: 'flex', justifyContent: 'center', gap: '1rem', flexWrap: 'wrap' }}>
+          <div style={{ display: 'flex', justifyContent: 'center', gap: '1rem', flexWrap: 'wrap', marginBottom: '1.5rem' }}>
             <button
               className="btn btn-primary btn-lg"
               onClick={() => onNavigate('register')}
               style={{ padding: '0.85rem 2rem' }}
             >
               <UserPlus size={18} />
-              <span>Get Started — It's Free</span>
+              <span>Get Started — Free</span>
             </button>
             <button
               className="btn btn-secondary btn-lg"
@@ -409,11 +387,40 @@ export const HomePage = ({ onNavigate }) => {
               style={{ padding: '0.85rem 2rem' }}
             >
               <LogIn size={18} />
-              <span>Sign In to Account</span>
+              <span>Sign In</span>
             </button>
+          </div>
+
+          {/* Contact Support directly via Gmail Web Compose */}
+          <div style={{ borderTop: '1px solid rgba(255,255,255,0.1)', paddingTop: '1.25rem', marginTop: '0.5rem' }}>
+            <span style={{ fontSize: '0.84rem', opacity: 0.85, marginRight: '0.75rem' }}>
+              Have questions or feedback?
+            </span>
+            <a
+              href={getGmailComposeUrl('adhithyam0210@gmail.com', 'PortfolioCraft Inquiry & Feedback')}
+              target="_blank"
+              rel="noopener noreferrer"
+              style={{
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: '0.45rem',
+                color: '#ffffff',
+                fontWeight: 700,
+                fontSize: '0.86rem',
+                textDecoration: 'underline',
+                background: 'rgba(255,255,255,0.12)',
+                padding: '0.35rem 0.85rem',
+                borderRadius: '8px',
+                transition: 'background 0.15s ease'
+              }}
+            >
+              <Mail size={15} />
+              <span>Contact via Gmail</span>
+            </a>
           </div>
         </div>
       </section>
     </div>
   );
 };
+export default HomePage;

@@ -6,6 +6,8 @@ import { CreativeTemplate } from './CreativeTemplate';
 import { TerminalTemplate } from './TerminalTemplate';
 import { EditorialTemplate } from './EditorialTemplate';
 import { BrutalistTemplate } from './BrutalistTemplate';
+import { BentoTemplate } from './BentoTemplate';
+import { CyberpunkTemplate } from './CyberpunkTemplate';
 
 export const PortfolioRenderer = ({ data }) => {
   if (!data) return null;
@@ -51,6 +53,8 @@ export const PortfolioRenderer = ({ data }) => {
       {templateName === 'terminal' && <TerminalTemplate data={enrichedData} theme={theme} />}
       {templateName === 'editorial' && <EditorialTemplate data={enrichedData} theme={theme} />}
       {templateName === 'brutalist' && <BrutalistTemplate data={enrichedData} theme={theme} />}
+      {templateName === 'bento' && <BentoTemplate data={enrichedData} theme={theme} />}
+      {templateName === 'cyberpunk' && <CyberpunkTemplate data={enrichedData} theme={theme} />}
     </div>
   );
 };

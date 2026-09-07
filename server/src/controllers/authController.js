@@ -13,6 +13,22 @@ const generateToken = (user) => {
   );
 };
 
+// Password requirement rule (8+ chars, 1 uppercase, 1 number, 1 special char)
+const validatePasswordRule = (password) => {
+  if (!password || password.length < 8) {
+    return 'Password must be at least 8 characters long.';
+  }
+  if (!/[A-Z]/.test(password)) {
+    return 'Password must contain at least 1 uppercase letter.';
+  }
+  if (!/[0-9]/.test(password)) {
+    return 'Password must contain at least 1 number.';
+  }
+  if (!/[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?~`]/.test(password)) {
+    return 'Password must contain at least 1 special character (!@#$%^&*...).';
+  }
+  return null;
+};
 // POST /api/auth/register
 const register = async (req, res) => {
   try {
@@ -50,8 +66,9 @@ const register = async (req, res) => {
       return res.status(400).json({ success: false, message: 'Phone number must be exactly 10 digits (numbers only).' });
     }
 
-    if (password.length < 6) {
-      return res.status(400).json({ success: false, message: 'Password must be at least 6 characters.' });
+    const passwordErr = validatePasswordRule(password);
+    if (passwordErr) {
+      return res.status(400).json({ success: false, message: passwordErr });
     }
 
     // Check existing username or email
@@ -234,8 +251,9 @@ const resetPassword = async (req, res) => {
       return res.status(400).json({ success: false, message: 'Reset token and new password are required.' });
     }
 
-    if (newPassword.length < 6) {
-      return res.status(400).json({ success: false, message: 'Password must be at least 6 characters.' });
+    const passwordErr = validatePasswordRule(newPassword);
+    if (passwordErr) {
+      return res.status(400).json({ success: false, message: passwordErr });
     }
 
     const user = await dbGet(
@@ -275,8 +293,9 @@ const changePassword = async (req, res) => {
       return res.status(400).json({ success: false, message: 'Current password and new password are required.' });
     }
 
-    if (newPassword.length < 6) {
-      return res.status(400).json({ success: false, message: 'New password must be at least 6 characters.' });
+    const passwordErr = validatePasswordRule(newPassword);
+    if (passwordErr) {
+      return res.status(400).json({ success: false, message: passwordErr });
     }
 
     const user = await dbGet('SELECT password_hash FROM users WHERE id = ?', [req.user.id]);

@@ -21,17 +21,24 @@ app.use(cors({
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 
-// Static directory for uploaded files (avatars, resumes)
+// Static directory for uploaded files (avatars, resumes, project images)
 const isServerless = Boolean(process.env.VERCEL || process.env.AWS_LAMBDA_FUNCTION_NAME);
-const uploadsPath = isServerless ? '/tmp/uploads' : path.resolve(__dirname, '../uploads');
-if (!fs.existsSync(uploadsPath)) {
-  try {
-    fs.mkdirSync(uploadsPath, { recursive: true });
-  } catch (e) {
-    // Ignore in read-only environments
+const repoUploadsPath = path.resolve(__dirname, '../uploads');
+const tmpUploadsPath = '/tmp/uploads';
+
+if (isServerless) {
+  if (!fs.existsSync(tmpUploadsPath)) {
+    try {
+      fs.mkdirSync(tmpUploadsPath, { recursive: true });
+    } catch (e) {}
   }
+  app.use('/uploads', express.static(tmpUploadsPath));
 }
-app.use('/uploads', express.static(uploadsPath));
+
+// Serve from repository uploads folder (contains committed project images & resumes)
+if (fs.existsSync(repoUploadsPath)) {
+  app.use('/uploads', express.static(repoUploadsPath));
+}
 
 // Normalize URL if /api was stripped by serverless router
 app.use((req, res, next) => {

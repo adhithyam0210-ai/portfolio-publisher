@@ -107,12 +107,35 @@ const downloadResumeBySlug = async (req, res) => {
       return res.status(404).json({ success: false, message: 'Resume document not found.' });
     }
 
-    const absPath = path.join(uploadsRoot, '..', resume.file_path);
+    // Try multiple possible paths:
+    // 1. In uploadsRoot (/tmp/uploads or server/uploads)
+    let absPath = path.join(uploadsRoot, '..', resume.file_path);
     if (!fs.existsSync(absPath)) {
-      return res.status(404).json({ success: false, message: 'File not found on server.' });
+      // 2. In repository server/uploads
+      const repoPath = path.resolve(__dirname, '../../uploads', '..', resume.file_path.replace(/^\//, ''));
+      if (fs.existsSync(repoPath)) {
+        absPath = repoPath;
+      } else {
+        // 3. Fallback direct match under resumes dir
+        const filename = path.basename(resume.file_path);
+        const altPath1 = path.join(uploadsRoot, 'resumes', filename);
+        const altPath2 = path.resolve(__dirname, '../../uploads/resumes', filename);
+        if (fs.existsSync(altPath1)) {
+          absPath = altPath1;
+        } else if (fs.existsSync(altPath2)) {
+          absPath = altPath2;
+        }
+      }
     }
 
-    return res.download(absPath, resume.original_name);
+    if (!fs.existsSync(absPath)) {
+      return res.status(404).json({ success: false, message: 'Resume file not found on server.' });
+    }
+
+    const downloadName = resume.original_name || 'Resume.pdf';
+    res.setHeader('Content-Disposition', `attachment; filename="${encodeURIComponent(downloadName)}"`);
+    res.setHeader('Content-Type', 'application/pdf');
+    return res.download(absPath, downloadName);
   } catch (err) {
     console.error('downloadResumeBySlug error:', err);
     return res.status(500).json({ success: false, message: 'Failed to download resume.' });

@@ -9,25 +9,22 @@ import {
   Download,
   ArrowUpRight
 } from 'lucide-react';
+import { getGmailComposeUrl, getAssetUrl } from '../../utils/url';
 
 export const MinimalTemplate = ({ data, theme = 'dark' }) => {
   const {
     profile = {},
-    education = [],
     skills = [],
     projects = [],
-    experience = [],
-    certifications = [],
-    achievements = [],
     resume = null,
     settings = {},
     visibility = {}
   } = data;
 
   const showSection = (sec) => visibility[sec] !== false;
-  const resumeUrl = resume
-    ? (resume.download_url || resume.file_path || resume.file_url || (data.portfolio?.slug ? `/api/upload/resume/download/${data.portfolio.slug}` : ''))
-    : '';
+  const resumeUrl = data.portfolio?.slug
+    ? `/api/upload/resume/download/${data.portfolio.slug}`
+    : (resume?.download_url || (resume?.file_path ? getAssetUrl(resume.file_path) : ''));
 
   return (
     <div className={`portfolio-view-root template-minimal theme-${theme}`}>
@@ -37,9 +34,10 @@ export const MinimalTemplate = ({ data, theme = 'dark' }) => {
           <div>
             {profile.profile_image && (
               <img
-                src={profile.profile_image}
+                src={getAssetUrl(profile.profile_image)}
                 alt={profile.full_name}
                 className="tmin-avatar"
+                onError={(e) => { e.currentTarget.style.display = 'none'; }}
               />
             )}
             <h1 style={{ fontSize: '2.75rem', fontWeight: 800, letterSpacing: '-0.04em', lineHeight: 1.1 }}>
@@ -55,10 +53,15 @@ export const MinimalTemplate = ({ data, theme = 'dark' }) => {
             )}
           </div>
 
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem', alignItems: 'flex-start' }}>
-            {settings.email_visible !== 0 && profile.email && (
-              <a href={`mailto:${profile.email}`} style={{ fontSize: '0.9rem', display: 'flex', alignItems: 'center', gap: '0.35rem', borderBottom: '1px solid currentColor' }}>
-                <Mail size={14} /> {profile.email}
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '0.6rem', alignItems: 'flex-start' }}>
+            {settings.email_visible !== 0 && (profile.email || data.user?.email) && (
+              <a
+                href={getGmailComposeUrl(profile.email || data.user?.email, `Portfolio Inquiry - ${profile.full_name || ''}`)}
+                target="_blank"
+                rel="noopener noreferrer"
+                style={{ fontSize: '0.9rem', display: 'flex', alignItems: 'center', gap: '0.35rem', borderBottom: '1px solid currentColor' }}
+              >
+                <Mail size={14} /> Contact via Gmail
               </a>
             )}
             {profile.website && (
@@ -73,10 +76,10 @@ export const MinimalTemplate = ({ data, theme = 'dark' }) => {
                 target="_blank"
                 rel="noopener noreferrer"
                 className="btn btn-outline btn-sm"
-                style={{ marginTop: '0.75rem' }}
+                style={{ marginTop: '0.5rem' }}
                 title={`Download ${resume.original_name || 'Resume'}`}
               >
-                <Download size={14} /> Resume (PDF)
+                <Download size={14} /> Download CV (PDF)
               </a>
             )}
           </div>
@@ -111,35 +114,12 @@ export const MinimalTemplate = ({ data, theme = 'dark' }) => {
       {/* About */}
       {showSection('about') && profile.about && (
         <section className="tmin-section">
-          <h3 style={{ fontSize: '1.1rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: '1.25rem', color: 'var(--tmin-accent)' }}>
+          <h3 style={{ fontSize: '1.1rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: '1rem', color: 'var(--tmin-accent)' }}>
             Background
           </h3>
-          <p style={{ fontSize: '1.05rem', lineHeight: 1.85, whiteSpace: 'pre-line' }}>
+          <p style={{ fontSize: '1.05rem', lineHeight: 1.8, opacity: 0.85, maxWidth: '720px', whiteSpace: 'pre-line' }}>
             {profile.about}
           </p>
-        </section>
-      )}
-
-      {/* Experience */}
-      {showSection('experience') && experience.length > 0 && (
-        <section className="tmin-section">
-          <h3 style={{ fontSize: '1.1rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: '1.5rem', color: 'var(--tmin-accent)' }}>
-            Experience
-          </h3>
-          <div>
-            {experience.map((exp, idx) => (
-              <div key={idx} className="tmin-item">
-                <div style={{ flex: 1, paddingRight: '2rem' }}>
-                  <h4 style={{ fontSize: '1.15rem', fontWeight: 700 }}>{exp.position}</h4>
-                  <div style={{ fontSize: '1rem', opacity: 0.85, margin: '0.2rem 0' }}>{exp.company}</div>
-                  {exp.description && <p style={{ fontSize: '0.9rem', opacity: 0.75, marginTop: '0.5rem' }}>{exp.description}</p>}
-                </div>
-                <div style={{ fontSize: '0.85rem', opacity: 0.6, whiteSpace: 'nowrap' }}>
-                  {exp.start_date} — {exp.is_current ? 'Present' : exp.end_date}
-                </div>
-              </div>
-            ))}
-          </div>
         </section>
       )}
 
@@ -147,7 +127,7 @@ export const MinimalTemplate = ({ data, theme = 'dark' }) => {
       {showSection('projects') && projects.length > 0 && (
         <section className="tmin-section">
           <h3 style={{ fontSize: '1.1rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: '1.5rem', color: 'var(--tmin-accent)' }}>
-            Projects
+            Selected Works
           </h3>
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '2rem' }}>
             {projects.map((p, idx) => (
@@ -178,11 +158,11 @@ export const MinimalTemplate = ({ data, theme = 'dark' }) => {
       {showSection('skills') && skills.length > 0 && (
         <section className="tmin-section">
           <h3 style={{ fontSize: '1.1rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: '1.25rem', color: 'var(--tmin-accent)' }}>
-            Skills
+            Capabilities
           </h3>
-          <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.75rem' }}>
+          <div className="tm-skills-cloud">
             {skills.map((s, idx) => (
-              <span key={idx} style={{ fontSize: '0.9rem', border: '1px solid rgba(255,255,255,0.15)', padding: '0.3rem 0.75rem' }}>
+              <span key={idx} className="tm-skill-chip">
                 {s.skill_name} <span style={{ opacity: 0.5 }}>/ {s.proficiency}</span>
               </span>
             ))}
@@ -190,27 +170,9 @@ export const MinimalTemplate = ({ data, theme = 'dark' }) => {
         </section>
       )}
 
-      {/* Education */}
-      {showSection('education') && education.length > 0 && (
-        <section className="tmin-section">
-          <h3 style={{ fontSize: '1.1rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: '1.25rem', color: 'var(--tmin-accent)' }}>
-            Education
-          </h3>
-          <div>
-            {education.map((e, idx) => (
-              <div key={idx} className="tmin-item">
-                <div>
-                  <h4 style={{ fontSize: '1.05rem', fontWeight: 600 }}>{e.degree}</h4>
-                  <div style={{ fontSize: '0.9rem', opacity: 0.8 }}>{e.institution}</div>
-                </div>
-                <div style={{ fontSize: '0.85rem', opacity: 0.6 }}>
-                  {e.start_year} — {e.end_year || 'Present'}
-                </div>
-              </div>
-            ))}
-          </div>
-        </section>
-      )}
+      <footer style={{ marginTop: '5rem', paddingTop: '2rem', borderTop: '1px solid rgba(255,255,255,0.1)', fontSize: '0.8rem', opacity: 0.5 }}>
+        Published with <strong>PortfolioCraft</strong>
+      </footer>
     </div>
   );
 };

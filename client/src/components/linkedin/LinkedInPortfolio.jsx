@@ -24,6 +24,7 @@ import {
   User,
   Shield
 } from 'lucide-react';
+import { getGmailComposeUrl } from '../../utils/url';
 
 export const LinkedInPortfolio = ({ data, theme, onToggleTheme, onNavigateUserLogin, onNavigateAdminLogin }) => {
   const {
@@ -600,7 +601,14 @@ export const LinkedInPortfolio = ({ data, theme, onToggleTheme, onNavigateUserLo
               {profile.email && (
                 <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
                   <Mail size={14} color="var(--text-muted)" />
-                  <a href={`mailto:${profile.email}`} style={{ color: 'var(--linkedin-blue)' }}>{profile.email}</a>
+                  <a 
+                    href={getGmailComposeUrl(profile.email, `Inquiry for ${profile.full_name || 'Portfolio'}`)} 
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    style={{ color: 'var(--linkedin-blue)' }}
+                  >
+                    {profile.email}
+                  </a>
                 </div>
               )}
 

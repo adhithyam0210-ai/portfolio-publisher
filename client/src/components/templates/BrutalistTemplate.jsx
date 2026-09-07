@@ -13,25 +13,23 @@ import {
   CheckCircle2,
   FolderKanban
 } from 'lucide-react';
+import { getGmailComposeUrl, getAssetUrl } from '../../utils/url';
 
 export const BrutalistTemplate = ({ data, theme = 'light' }) => {
   const {
     profile = {},
-    education = [],
     skills = [],
     projects = [],
-    experience = [],
-    certifications = [],
-    achievements = [],
     resume = null,
     settings = {},
     visibility = {}
   } = data;
 
   const showSection = (sec) => visibility[sec] !== false;
-  const resumeUrl = resume
-    ? (resume.download_url || resume.file_path || resume.file_url || (data.portfolio?.slug ? `/api/upload/resume/download/${data.portfolio.slug}` : ''))
-    : '';
+  const slug = data.portfolio?.slug || '';
+  const resumeUrl = slug
+    ? `/api/upload/resume/download/${slug}`
+    : (resume?.download_url || resume?.file_path || resume?.file_url || '');
 
   return (
     <div className={`portfolio-view-root template-brutalist theme-${theme}`}>
@@ -56,8 +54,13 @@ export const BrutalistTemplate = ({ data, theme = 'light' }) => {
             {/* Brutalist Button Links */}
             <div className="brutalist-btn-row">
               {settings.email_visible !== 0 && profile.email && (
-                <a href={`mailto:${profile.email}`} className="brutalist-btn bg-yellow">
-                  <Mail size={16} /> CONTACT ME
+                <a 
+                  href={getGmailComposeUrl(profile.email, `Inquiry for ${profile.full_name || 'Engineer'}`)}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="brutalist-btn bg-yellow"
+                >
+                  <Mail size={16} /> CONTACT ME (GMAIL)
                 </a>
               )}
               {profile.github && (
@@ -70,7 +73,7 @@ export const BrutalistTemplate = ({ data, theme = 'light' }) => {
                   <Linkedin size={16} /> LINKEDIN
                 </a>
               )}
-              {settings.resume_downloadable !== 0 && resume && (
+              {settings.resume_downloadable !== 0 && resume && resumeUrl && (
                 <a
                   href={resumeUrl}
                   download={resume.original_name || 'RESUME.PDF'}
@@ -79,7 +82,7 @@ export const BrutalistTemplate = ({ data, theme = 'light' }) => {
                   className="brutalist-btn bg-mint"
                   title={`Download ${resume.original_name || 'RESUME.PDF'}`}
                 >
-                  <Download size={16} /> {resume.original_name ? resume.original_name.toUpperCase() : 'RESUME.PDF'}
+                  <Download size={16} /> {resume.original_name ? resume.original_name.toUpperCase() : 'DOWNLOAD CV'}
                 </a>
               )}
             </div>
@@ -88,9 +91,10 @@ export const BrutalistTemplate = ({ data, theme = 'light' }) => {
           {profile.profile_image && (
             <div className="brutalist-avatar-frame">
               <img
-                src={profile.profile_image}
-                alt={profile.full_name}
+                src={getAssetUrl(profile.profile_image)}
+                alt={profile.full_name || 'Profile'}
                 className="brutalist-avatar-img"
+                onError={(e) => { e.currentTarget.style.display = 'none'; }}
               />
               <div className="avatar-sticker-badge">VERIFIED</div>
             </div>
@@ -105,7 +109,7 @@ export const BrutalistTemplate = ({ data, theme = 'light' }) => {
             </div>
             <div className="brutalist-skills-grid">
               {skills.map((s, idx) => (
-                <div key={idx} className="brutalist-skill-block">
+                <div key={idx} className="brutalist-skill-block tm-skill-chip">
                   <span className="skill-name">{s.skill_name}</span>
                   <span className="skill-badge">{s.proficiency || 'EXPERT'}</span>
                 </div>
@@ -124,6 +128,16 @@ export const BrutalistTemplate = ({ data, theme = 'light' }) => {
               {projects.map((proj, idx) => (
                 <div key={idx} className="brutalist-project-card">
                   <div className="proj-tag-badge">PROJECT #{String(idx + 1).padStart(2, '0')}</div>
+                  {proj.image_url && (
+                    <div style={{ marginBottom: '14px', border: '3px solid #000', overflow: 'hidden', maxHeight: '180px' }}>
+                      <img 
+                        src={getAssetUrl(proj.image_url)} 
+                        alt={proj.title} 
+                        style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                        onError={(e) => { e.currentTarget.style.display = 'none'; }}
+                      />
+                    </div>
+                  )}
                   <h3 className="proj-title">{proj.title}</h3>
                   <p className="proj-desc">{proj.description}</p>
                   {proj.technologies && (
@@ -151,29 +165,6 @@ export const BrutalistTemplate = ({ data, theme = 'light' }) => {
           </section>
         )}
 
-        {/* Experience Section */}
-        {showSection('experience') && experience.length > 0 && (
-          <section className="brutalist-card-section">
-            <div className="brutalist-header-tab bg-purple">
-              CAREER CHRONOLOGY
-            </div>
-            <div className="brutalist-exp-stack">
-              {experience.map((exp, idx) => (
-                <div key={idx} className="brutalist-exp-item">
-                  <div className="exp-left-bar">
-                    <div className="exp-position">{exp.position}</div>
-                    <div className="exp-company">@{exp.company}</div>
-                    <div className="exp-period-pill">{exp.start_date} — {exp.is_current ? 'PRESENT' : exp.end_date}</div>
-                  </div>
-                  <div className="exp-right-content">
-                    <p>{exp.description}</p>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </section>
-        )}
-
         {/* Footer */}
         <footer className="brutalist-footer-box">
           <div>© {new Date().getFullYear()} {profile.full_name?.toUpperCase() || 'DEVELOPER'} • PORTFOLIOCRAFT</div>
@@ -183,3 +174,4 @@ export const BrutalistTemplate = ({ data, theme = 'light' }) => {
     </div>
   );
 };
+export default BrutalistTemplate;

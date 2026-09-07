@@ -12,25 +12,23 @@ import {
   Sparkles,
   Quote
 } from 'lucide-react';
+import { getGmailComposeUrl, getAssetUrl } from '../../utils/url';
 
 export const EditorialTemplate = ({ data, theme = 'light' }) => {
   const {
     profile = {},
-    education = [],
     skills = [],
     projects = [],
-    experience = [],
-    certifications = [],
-    achievements = [],
     resume = null,
     settings = {},
     visibility = {}
   } = data;
 
   const showSection = (sec) => visibility[sec] !== false;
-  const resumeUrl = resume
-    ? (resume.download_url || resume.file_path || resume.file_url || (data.portfolio?.slug ? `/api/upload/resume/download/${data.portfolio.slug}` : ''))
-    : '';
+  const slug = data.portfolio?.slug || '';
+  const resumeUrl = slug 
+    ? `/api/upload/resume/download/${slug}` 
+    : (resume?.download_url || resume?.file_path || resume?.file_url || '');
 
   return (
     <div className={`portfolio-view-root template-editorial theme-${theme}`}>
@@ -38,7 +36,7 @@ export const EditorialTemplate = ({ data, theme = 'light' }) => {
         {/* Top Masthead */}
         <header className="editorial-masthead">
           <div className="masthead-meta">
-            <span>VOLUME IV • ISSUE 2026</span>
+            <span>VOLUME IV • ISSUE {new Date().getFullYear()}</span>
             <span>PORTFOLIO MONOGRAPH</span>
             <span>{profile.location || 'AVAILABLE INTERNATIONALLY'}</span>
           </div>
@@ -60,7 +58,12 @@ export const EditorialTemplate = ({ data, theme = 'light' }) => {
 
               <div className="editorial-contact-strip">
                 {settings.email_visible !== 0 && profile.email && (
-                  <a href={`mailto:${profile.email}`} className="editorial-link">
+                  <a 
+                    href={getGmailComposeUrl(profile.email, `Inquiry via Portfolio: ${profile.full_name || ''}`)}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="editorial-link"
+                  >
                     <Mail size={14} /> {profile.email}
                   </a>
                 )}
@@ -74,7 +77,7 @@ export const EditorialTemplate = ({ data, theme = 'light' }) => {
                     <Github size={14} /> GitHub
                   </a>
                 )}
-                {settings.resume_downloadable !== 0 && resume && (
+                {settings.resume_downloadable !== 0 && resume && resumeUrl && (
                   <a
                     href={resumeUrl}
                     download={resume.original_name || 'Resume.pdf'}
@@ -92,12 +95,13 @@ export const EditorialTemplate = ({ data, theme = 'light' }) => {
             {profile.profile_image && (
               <div className="editorial-hero-image-wrap">
                 <img
-                  src={profile.profile_image}
-                  alt={profile.full_name}
+                  src={getAssetUrl(profile.profile_image)}
+                  alt={profile.full_name || 'Author portrait'}
                   className="editorial-hero-image"
+                  onError={(e) => { e.currentTarget.style.display = 'none'; }}
                 />
                 <div className="editorial-image-caption">
-                  PORTRAIT // {profile.full_name?.toUpperCase() || 'AUTEUR'}
+                  PORTRAIT // {profile.full_name?.toUpperCase() || 'PRACTITIONER'}
                 </div>
               </div>
             )}
@@ -166,36 +170,12 @@ export const EditorialTemplate = ({ data, theme = 'light' }) => {
               <span className="editorial-num">03</span>
               <h3 className="editorial-section-title">Core Competencies</h3>
             </div>
-            <div className="editorial-skills-cloud">
+            <div className="editorial-skills-cloud tm-skills-cloud">
               {skills.map((s, idx) => (
-                <div key={idx} className="editorial-skill-tag">
+                <div key={idx} className="editorial-skill-tag tm-skill-chip">
                   <span className="skill-title">{s.skill_name}</span>
                   <span className="skill-dot">•</span>
-                  <span className="skill-tier">{s.proficiency || 'Expert'}</span>
-                </div>
-              ))}
-            </div>
-          </section>
-        )}
-
-        {/* Experience Chronology */}
-        {showSection('experience') && experience.length > 0 && (
-          <section className="editorial-section">
-            <div className="editorial-section-header">
-              <span className="editorial-num">04</span>
-              <h3 className="editorial-section-title">Professional History</h3>
-            </div>
-            <div className="editorial-history-timeline">
-              {experience.map((exp, idx) => (
-                <div key={idx} className="editorial-history-item">
-                  <div className="history-period">
-                    {exp.start_date} — {exp.is_current ? 'Present' : exp.end_date}
-                  </div>
-                  <div className="history-details">
-                    <h5 className="history-role">{exp.position}</h5>
-                    <div className="history-company">{exp.company}</div>
-                    <p className="history-desc">{exp.description}</p>
-                  </div>
+                  <span className="skill-tier">{s.proficiency || 'Proficient'}</span>
                 </div>
               ))}
             </div>
@@ -214,3 +194,4 @@ export const EditorialTemplate = ({ data, theme = 'light' }) => {
     </div>
   );
 };
+export default EditorialTemplate;

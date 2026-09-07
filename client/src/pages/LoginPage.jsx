@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { useToast } from '../context/ToastContext';
-import { Eye, EyeOff, ArrowLeft, Check, X, Layers, AlertCircle, ChevronRight } from 'lucide-react';
+import { Eye, EyeOff, ArrowLeft, Layers, AlertCircle, Sparkles, FolderGit2, Share2 } from 'lucide-react';
 
 export const LoginPage = ({ onNavigate }) => {
   const { user, login, loginWithGoogle, logout } = useAuth();
@@ -13,22 +13,20 @@ export const LoginPage = ({ onNavigate }) => {
   const [rememberMe, setRememberMe] = useState(false);
   const [submitting, setSubmitting] = useState(false);
 
-  // Inline error state & general banner error
+  // Inline errors state & general banner error
   const [errors, setErrors] = useState({ identifier: '', password: '' });
   const [formError, setFormError] = useState('');
-  const [isGoogleModalOpen, setIsGoogleModalOpen] = useState(false);
-  const [customGoogleEmail, setCustomGoogleEmail] = useState('');
 
   const validateField = (field, value) => {
     let err = '';
     if (field === 'identifier') {
       const clean = value.trim();
       if (!clean) {
-        err = 'E-mail, username, or phone number is required.';
+        err = 'Email or username is required.';
       } else if (clean.includes('@')) {
         const emailRegex = /^[^\s@]+@[^\s@]+\.[a-zA-Z]{2,}$/;
         if (!emailRegex.test(clean)) {
-          err = 'Please enter a valid email address (e.g. name@gmail.com).';
+          err = 'Please enter a valid email address (e.g. name@example.com).';
         }
       }
     } else if (field === 'password') {
@@ -80,7 +78,7 @@ export const LoginPage = ({ onNavigate }) => {
       const lowerMsg = msg.toLowerCase();
 
       if (lowerMsg.includes('user not found') || lowerMsg.includes('username') || lowerMsg.includes('email')) {
-        setErrors((prev) => ({ ...prev, identifier: 'No account found with this email, username, or phone number.' }));
+        setErrors((prev) => ({ ...prev, identifier: 'No account found with this email or username.' }));
       } else if (lowerMsg.includes('password')) {
         setErrors((prev) => ({ ...prev, password: 'Incorrect password. Please verify and try again.' }));
       } else {
@@ -92,16 +90,17 @@ export const LoginPage = ({ onNavigate }) => {
     }
   };
 
-  const executeGoogleAuth = async (email, name, picture) => {
+  const handleGoogleSignIn = async () => {
+    const defaultEmail = prompt('Enter your Google email to sign in:', 'user@gmail.com');
+    if (!defaultEmail || !defaultEmail.includes('@')) return;
     setSubmitting(true);
     try {
       const loggedUser = await loginWithGoogle({
-        email,
-        name,
-        picture: picture || 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150&auto=format&fit=crop&q=80'
+        email: defaultEmail.trim(),
+        name: defaultEmail.split('@')[0],
+        picture: 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=150&auto=format&fit=crop&q=80'
       });
-      setIsGoogleModalOpen(false);
-      toast.success(`Signed in with Google as ${loggedUser.email}!`);
+      toast.success(`Signed in as ${loggedUser.email}!`);
       if (loggedUser.role === 'ADMIN') {
         onNavigate('admin');
       } else {
@@ -139,7 +138,7 @@ export const LoginPage = ({ onNavigate }) => {
           fontWeight: 600,
           marginBottom: '1.25rem',
           width: '100%',
-          maxWidth: '430px',
+          maxWidth: '460px',
           transition: 'color 0.15s ease'
         }}
         onMouseEnter={(e) => (e.currentTarget.style.color = 'var(--accent-primary)')}
@@ -152,10 +151,10 @@ export const LoginPage = ({ onNavigate }) => {
       {/* Main Card */}
       <div style={{
         width: '100%',
-        maxWidth: '440px',
+        maxWidth: '460px',
         background: 'var(--bg-card)',
         border: '1px solid var(--border-light)',
-        borderRadius: '20px',
+        borderRadius: '24px',
         padding: '2.5rem 2.25rem',
         boxShadow: 'var(--shadow-card)'
       }}>
@@ -270,14 +269,15 @@ export const LoginPage = ({ onNavigate }) => {
         <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
           <div>
             <label style={{ display: 'block', fontSize: '0.84rem', fontWeight: 600, color: 'var(--text-secondary)', marginBottom: '0.4rem' }}>
-              E-mail or Username
+              Email or Username
             </label>
             <input
               type="text"
-              placeholder="e.g. name@gmail.com or username"
+              placeholder="name@example.com or username"
               value={identifier}
               onChange={handleIdentifierChange}
               onBlur={() => validateField('identifier', identifier)}
+              className={`form-input-standard ${errors.identifier ? 'has-error' : ''}`}
               style={{
                 width: '100%',
                 padding: '0.8rem 1rem',
@@ -297,7 +297,7 @@ export const LoginPage = ({ onNavigate }) => {
             />
             {errors.identifier && (
               <div style={{ color: '#ef4444', fontSize: '0.78rem', marginTop: '0.35rem', fontWeight: 500, display: 'flex', alignItems: 'center', gap: '0.3rem' }}>
-                <span>⚠️</span>
+                <AlertCircle size={13} style={{ flexShrink: 0 }} />
                 <span>{errors.identifier}</span>
               </div>
             )}
@@ -314,6 +314,7 @@ export const LoginPage = ({ onNavigate }) => {
                 value={password}
                 onChange={handlePasswordChange}
                 onBlur={() => validateField('password', password)}
+                className={`form-input-standard ${errors.password ? 'has-error' : ''}`}
                 style={{
                   width: '100%',
                   padding: '0.8rem 2.8rem 0.8rem 1rem',
@@ -354,7 +355,7 @@ export const LoginPage = ({ onNavigate }) => {
             </div>
             {errors.password && (
               <div style={{ color: '#ef4444', fontSize: '0.78rem', marginTop: '0.35rem', fontWeight: 500, display: 'flex', alignItems: 'center', gap: '0.3rem' }}>
-                <span>⚠️</span>
+                <AlertCircle size={13} style={{ flexShrink: 0 }} />
                 <span>{errors.password}</span>
               </div>
             )}
@@ -415,7 +416,7 @@ export const LoginPage = ({ onNavigate }) => {
         </form>
 
         {/* OR Divider */}
-        <div style={{ display: 'flex', alignItems: 'center', margin: '1.75rem 0', gap: '1rem' }}>
+        <div style={{ display: 'flex', alignItems: 'center', margin: '1.5rem 0', gap: '1rem' }}>
           <div style={{ flex: 1, height: '1px', background: 'var(--border-light)' }} />
           <span style={{ fontSize: '0.78rem', color: 'var(--text-muted)', fontWeight: 600, textTransform: 'uppercase' }}>
             OR
@@ -426,7 +427,7 @@ export const LoginPage = ({ onNavigate }) => {
         {/* Continue with Google Pill Button */}
         <button
           type="button"
-          onClick={() => setIsGoogleModalOpen(true)}
+          onClick={handleGoogleSignIn}
           style={{
             width: '100%',
             background: 'var(--bg-surface)',
@@ -446,292 +447,149 @@ export const LoginPage = ({ onNavigate }) => {
           onMouseEnter={(e) => { e.currentTarget.style.borderColor = '#94a3b8'; e.currentTarget.style.background = 'var(--bg-subtle)'; }}
           onMouseLeave={(e) => { e.currentTarget.style.borderColor = 'var(--border-medium)'; e.currentTarget.style.background = 'var(--bg-surface)'; }}
         >
-          {/* Multi-colored Google G Icon */}
           <svg width="18" height="18" viewBox="0 0 24 24">
-            <path
-              fill="#4285F4"
-              d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"
-            />
-            <path
-              fill="#34A853"
-              d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"
-            />
-            <path
-              fill="#FBBC05"
-              d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.06H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.94l2.85-2.22.81-.63z"
-            />
-            <path
-              fill="#EA4335"
-              d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.06l3.66 2.84c.87-2.6 3.3-4.52 6.16-4.52z"
-            />
+            <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
+            <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
+            <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.06H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.94l2.85-2.22.81-.63z"/>
+            <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.06l3.66 2.84c.87-2.6 3.3-4.52 6.16-4.52z"/>
           </svg>
           <span>Continue with Google</span>
         </button>
-      </div>
 
-      {/* Google Sign-In Account Chooser Modal */}
-      {isGoogleModalOpen && (
+        {/* "How It Works" Guide placed exactly where the demo buttons were */}
         <div style={{
-          position: 'fixed',
-          top: 0,
-          left: 0,
-          right: 0,
-          bottom: 0,
-          background: 'rgba(0, 0, 0, 0.65)',
-          backdropFilter: 'blur(6px)',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          zIndex: 9999,
-          padding: '1rem'
+          marginTop: '2rem',
+          paddingTop: '1.5rem',
+          borderTop: '1px solid var(--border-light)'
         }}>
           <div style={{
-            background: 'var(--bg-card)',
-            border: '1px solid var(--border-light)',
-            borderRadius: '24px',
-            padding: '2.25rem 2rem',
-            maxWidth: '430px',
-            width: '100%',
-            boxShadow: '0 24px 48px rgba(0,0,0,0.3)',
-            position: 'relative',
-            animation: 'modalSlideUp 0.2s ease-out'
+            fontSize: '0.8rem',
+            fontWeight: 700,
+            color: 'var(--text-muted)',
+            textTransform: 'uppercase',
+            letterSpacing: '0.06em',
+            marginBottom: '1rem',
+            display: 'flex',
+            alignItems: 'center',
+            gap: '0.4rem'
           }}>
-            {/* Close Button */}
-            <button
-              onClick={() => setIsGoogleModalOpen(false)}
-              style={{
-                position: 'absolute',
-                top: '16px',
-                right: '16px',
-                background: 'var(--bg-subtle)',
-                border: 'none',
-                borderRadius: '50%',
-                width: '32px',
-                height: '32px',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                color: 'var(--text-muted)',
-                cursor: 'pointer'
-              }}
-            >
-              <X size={18} />
-            </button>
+            <Sparkles size={14} color="var(--accent-primary)" />
+            <span>How PortfolioCraft Works</span>
+          </div>
 
-            {/* Google Header */}
-            <div style={{ display: 'flex', alignItems: 'center', gap: '0.85rem', marginBottom: '1.5rem' }}>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '0.85rem' }}>
+            {/* Step 1 */}
+            <div style={{
+              display: 'flex',
+              alignItems: 'flex-start',
+              gap: '0.75rem',
+              padding: '0.75rem 0.85rem',
+              borderRadius: '12px',
+              background: 'var(--bg-subtle)',
+              border: '1px solid var(--border-light)'
+            }}>
               <div style={{
-                width: '40px',
-                height: '40px',
-                borderRadius: '12px',
-                background: '#ffffff',
+                width: '24px',
+                height: '24px',
+                borderRadius: '6px',
+                background: 'rgba(5, 150, 105, 0.15)',
+                color: 'var(--accent-primary)',
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
-                boxShadow: '0 2px 8px rgba(0,0,0,0.08)',
-                flexShrink: 0
+                fontWeight: 700,
+                fontSize: '0.78rem',
+                flexShrink: 0,
+                marginTop: '1px'
               }}>
-                <svg width="22" height="22" viewBox="0 0 24 24">
-                  <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
-                  <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
-                  <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.06H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.94l2.85-2.22.81-.63z"/>
-                  <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.06l3.66 2.84c.87-2.6 3.3-4.52 6.16-4.52z"/>
-                </svg>
+                1
               </div>
-              <div>
-                <h3 style={{ margin: 0, fontSize: '1.2rem', fontWeight: 800, color: 'var(--text-main)', letterSpacing: '-0.02em' }}>
-                  Sign in with Google
-                </h3>
-                <span style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>
-                  Choose an account to continue to PortfolioCraft
-                </span>
+              <div style={{ flex: 1 }}>
+                <div style={{ fontSize: '0.84rem', fontWeight: 700, color: 'var(--text-main)', lineHeight: 1.3 }}>
+                  Sign in or Create Account
+                </div>
+                <div style={{ fontSize: '0.76rem', color: 'var(--text-secondary)', marginTop: '2px', lineHeight: 1.35 }}>
+                  Access your developer dashboard to manage profile details and resume.
+                </div>
               </div>
             </div>
 
-            {/* Quick 1-Click User Account Option with Rich Profile Images */}
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem', marginBottom: '1.5rem' }}>
-              {/* Account 1: Adhithya M */}
-              <div
-                onClick={() => executeGoogleAuth('adhithyam0210@gmail.com', 'Adhithya M', 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=150&auto=format&fit=crop&q=80')}
-                style={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: '0.9rem',
-                  padding: '0.85rem 1rem',
-                  border: '1.5px solid var(--border-medium)',
-                  borderRadius: '14px',
-                  background: 'var(--bg-subtle)',
-                  cursor: 'pointer',
-                  transition: 'all 0.18s ease'
-                }}
-                onMouseEnter={(e) => {
-                  e.currentTarget.style.borderColor = 'var(--accent-primary)';
-                  e.currentTarget.style.transform = 'translateY(-1px)';
-                  e.currentTarget.style.boxShadow = '0 4px 12px rgba(0,0,0,0.06)';
-                }}
-                onMouseLeave={(e) => {
-                  e.currentTarget.style.borderColor = 'var(--border-medium)';
-                  e.currentTarget.style.transform = 'translateY(0)';
-                  e.currentTarget.style.boxShadow = 'none';
-                }}
-              >
-                <div style={{ position: 'relative' }}>
-                  <img
-                    src="https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=150&auto=format&fit=crop&q=80"
-                    alt="Adhithya M"
-                    style={{
-                      width: '42px',
-                      height: '42px',
-                      borderRadius: '50%',
-                      objectFit: 'cover',
-                      border: '2px solid #ffffff',
-                      boxShadow: '0 2px 6px rgba(0,0,0,0.15)'
-                    }}
-                  />
-                  <div style={{
-                    position: 'absolute',
-                    bottom: '-2px',
-                    right: '-2px',
-                    width: '16px',
-                    height: '16px',
-                    borderRadius: '50%',
-                    background: '#ffffff',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    boxShadow: '0 1px 3px rgba(0,0,0,0.2)'
-                  }}>
-                    <svg width="10" height="10" viewBox="0 0 24 24">
-                      <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
-                      <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
-                      <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.06H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.94l2.85-2.22.81-.63z"/>
-                      <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.06l3.66 2.84c.87-2.6 3.3-4.52 6.16-4.52z"/>
-                    </svg>
-                  </div>
-                </div>
-                <div style={{ flex: 1, textAlign: 'left' }}>
-                  <div style={{ fontSize: '0.92rem', fontWeight: 700, color: 'var(--text-main)', lineHeight: 1.2 }}>
-                    Adhithya M
-                  </div>
-                  <div style={{ fontSize: '0.78rem', color: 'var(--text-secondary)' }}>
-                    adhithyam0210@gmail.com
-                  </div>
-                </div>
-                <ChevronRight size={18} color="var(--text-muted)" />
+            {/* Step 2 */}
+            <div style={{
+              display: 'flex',
+              alignItems: 'flex-start',
+              gap: '0.75rem',
+              padding: '0.75rem 0.85rem',
+              borderRadius: '12px',
+              background: 'var(--bg-subtle)',
+              border: '1px solid var(--border-light)'
+            }}>
+              <div style={{
+                width: '24px',
+                height: '24px',
+                borderRadius: '6px',
+                background: 'rgba(99, 102, 241, 0.15)',
+                color: 'var(--primary)',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                fontWeight: 700,
+                fontSize: '0.78rem',
+                flexShrink: 0,
+                marginTop: '1px'
+              }}>
+                2
               </div>
-
-              {/* Account 2: Adhithya */}
-              <div
-                onClick={() => executeGoogleAuth('adhithya@gmail.com', 'Adhithya', 'https://images.unsplash.com/photo-1570295999919-56ceb5ecca61?w=150&auto=format&fit=crop&q=80')}
-                style={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: '0.9rem',
-                  padding: '0.85rem 1rem',
-                  border: '1.5px solid var(--border-medium)',
-                  borderRadius: '14px',
-                  background: 'var(--bg-subtle)',
-                  cursor: 'pointer',
-                  transition: 'all 0.18s ease'
-                }}
-                onMouseEnter={(e) => {
-                  e.currentTarget.style.borderColor = 'var(--accent-primary)';
-                  e.currentTarget.style.transform = 'translateY(-1px)';
-                  e.currentTarget.style.boxShadow = '0 4px 12px rgba(0,0,0,0.06)';
-                }}
-                onMouseLeave={(e) => {
-                  e.currentTarget.style.borderColor = 'var(--border-medium)';
-                  e.currentTarget.style.transform = 'translateY(0)';
-                  e.currentTarget.style.boxShadow = 'none';
-                }}
-              >
-                <div style={{ position: 'relative' }}>
-                  <img
-                    src="https://images.unsplash.com/photo-1570295999919-56ceb5ecca61?w=150&auto=format&fit=crop&q=80"
-                    alt="Adhithya"
-                    style={{
-                      width: '42px',
-                      height: '42px',
-                      borderRadius: '50%',
-                      objectFit: 'cover',
-                      border: '2px solid #ffffff',
-                      boxShadow: '0 2px 6px rgba(0,0,0,0.15)'
-                    }}
-                  />
-                  <div style={{
-                    position: 'absolute',
-                    bottom: '-2px',
-                    right: '-2px',
-                    width: '16px',
-                    height: '16px',
-                    borderRadius: '50%',
-                    background: '#ffffff',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    boxShadow: '0 1px 3px rgba(0,0,0,0.2)'
-                  }}>
-                    <svg width="10" height="10" viewBox="0 0 24 24">
-                      <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
-                      <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
-                      <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.06H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.94l2.85-2.22.81-.63z"/>
-                      <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.06l3.66 2.84c.87-2.6 3.3-4.52 6.16-4.52z"/>
-                    </svg>
-                  </div>
+              <div style={{ flex: 1 }}>
+                <div style={{ fontSize: '0.84rem', fontWeight: 700, color: 'var(--text-main)', lineHeight: 1.3 }}>
+                  Add Projects &amp; Skills
                 </div>
-                <div style={{ flex: 1, textAlign: 'left' }}>
-                  <div style={{ fontSize: '0.92rem', fontWeight: 700, color: 'var(--text-main)', lineHeight: 1.2 }}>
-                    Adhithya
-                  </div>
-                  <div style={{ fontSize: '0.78rem', color: 'var(--text-secondary)' }}>
-                    adhithya@gmail.com
-                  </div>
+                <div style={{ fontSize: '0.76rem', color: 'var(--text-secondary)', marginTop: '2px', lineHeight: 1.35 }}>
+                  Showcase your work with live preview links, GitHub repositories, and tech stacks.
                 </div>
-                <ChevronRight size={18} color="var(--text-muted)" />
               </div>
             </div>
 
-            {/* Custom Google Email Input */}
-            <div style={{ borderTop: '1px solid var(--border-light)', paddingTop: '1.25rem' }}>
-              <label style={{ display: 'block', fontSize: '0.82rem', fontWeight: 600, color: 'var(--text-secondary)', marginBottom: '0.45rem' }}>
-                Or enter another Google email:
-              </label>
-              <div style={{ display: 'flex', gap: '0.5rem' }}>
-                <input
-                  type="email"
-                  placeholder="e.g. name@gmail.com"
-                  value={customGoogleEmail}
-                  onChange={(e) => setCustomGoogleEmail(e.target.value)}
-                  style={{
-                    flex: 1,
-                    padding: '0.7rem 0.9rem',
-                    borderRadius: '10px',
-                    border: '1.5px solid var(--border-medium)',
-                    background: 'var(--bg-surface)',
-                    color: 'var(--text-main)',
-                    fontSize: '0.88rem',
-                    outline: 'none'
-                  }}
-                />
-                <button
-                  type="button"
-                  disabled={!customGoogleEmail.includes('@')}
-                  onClick={() => executeGoogleAuth(customGoogleEmail, customGoogleEmail.split('@')[0])}
-                  className="btn btn-primary btn-sm"
-                  style={{ borderRadius: '10px', padding: '0.7rem 1.25rem', fontWeight: 700 }}
-                >
-                  Continue
-                </button>
+            {/* Step 3 */}
+            <div style={{
+              display: 'flex',
+              alignItems: 'flex-start',
+              gap: '0.75rem',
+              padding: '0.75rem 0.85rem',
+              borderRadius: '12px',
+              background: 'var(--bg-subtle)',
+              border: '1px solid var(--border-light)'
+            }}>
+              <div style={{
+                width: '24px',
+                height: '24px',
+                borderRadius: '6px',
+                background: 'rgba(245, 158, 11, 0.15)',
+                color: '#f59e0b',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                fontWeight: 700,
+                fontSize: '0.78rem',
+                flexShrink: 0,
+                marginTop: '1px'
+              }}>
+                3
+              </div>
+              <div style={{ flex: 1 }}>
+                <div style={{ fontSize: '0.84rem', fontWeight: 700, color: 'var(--text-main)', lineHeight: 1.3 }}>
+                  Choose Template &amp; Publish
+                </div>
+                <div style={{ fontSize: '0.76rem', color: 'var(--text-secondary)', marginTop: '2px', lineHeight: 1.35 }}>
+                  Pick from 8 distinct templates and share your personalized public portfolio link.
+                </div>
               </div>
             </div>
-
-            <p style={{ fontSize: '0.72rem', color: 'var(--text-muted)', marginTop: '1.25rem', marginBottom: 0, textAlign: 'center', lineHeight: 1.4 }}>
-              To continue, Google will verify your email and profile with PortfolioCraft.
-            </p>
           </div>
         </div>
-      )}
+
+      </div>
     </div>
   );
 };
-
+export default LoginPage;

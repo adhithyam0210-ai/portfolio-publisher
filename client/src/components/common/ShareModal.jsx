@@ -13,6 +13,7 @@ import {
   Twitter,
   Mail
 } from 'lucide-react';
+import { getGmailComposeUrl } from '../../utils/url';
 
 export const ShareModal = ({ isOpen, onClose, slug, title = "Share Your Portfolio" }) => {
   const toast = useToast();
@@ -86,10 +87,10 @@ export const ShareModal = ({ isOpen, onClose, slug, title = "Share Your Portfoli
       url: `https://twitter.com/intent/tweet?url=${encodedUrl}&text=${encodeURIComponent('Check out my professional online portfolio:')}`
     },
     {
-      name: 'Email',
+      name: 'Gmail',
       icon: Mail,
       color: '#EA4335',
-      url: `mailto:?subject=${encodeURIComponent('My Professional Portfolio')}&body=${shareText}`
+      url: getGmailComposeUrl('', 'My Professional Portfolio', `Check out my professional online portfolio: ${shareUrl}`)
     }
   ];
 

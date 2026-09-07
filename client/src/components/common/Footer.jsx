@@ -1,5 +1,6 @@
 import React from 'react';
-import { Layers } from 'lucide-react';
+import { Layers, Mail } from 'lucide-react';
+import { getGmailComposeUrl } from '../../utils/url';
 
 export const Footer = () => {
   return (
@@ -33,14 +34,24 @@ export const Footer = () => {
             <Layers size={14} />
           </div>
           <span style={{ fontWeight: 700, color: 'var(--text-main)', fontSize: '0.875rem' }}>PortfolioCraft</span>
-          <span style={{ color: 'var(--text-muted)', fontSize: '0.825rem' }}>– Professional Portfolio Builder &amp; Publishing Platform</span>
+          <span style={{ color: 'var(--text-muted)', fontSize: '0.825rem' }}>– Professional Portfolio Publisher</span>
         </div>
 
-        <p style={{ margin: 0, fontSize: '0.825rem', color: 'var(--text-muted)' }}>
-          © {new Date().getFullYear()} PortfolioCraft Inc. All rights reserved.
-        </p>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '1.25rem' }}>
+          <a
+            href={getGmailComposeUrl('adhithyam0210@gmail.com', 'PortfolioCraft Platform Inquiry')}
+            target="_blank"
+            rel="noopener noreferrer"
+            style={{ color: 'var(--accent-primary)', fontWeight: 600, display: 'inline-flex', alignItems: 'center', gap: '0.35rem', textDecoration: 'none' }}
+          >
+            <Mail size={13} /> Contact (Gmail)
+          </a>
+          <p style={{ margin: 0, fontSize: '0.825rem', color: 'var(--text-muted)' }}>
+            © {new Date().getFullYear()} PortfolioCraft Inc.
+          </p>
+        </div>
       </div>
     </footer>
   );
 };
-
+export default Footer;

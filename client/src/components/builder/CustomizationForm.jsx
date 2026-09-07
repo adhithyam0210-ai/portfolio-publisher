@@ -61,6 +61,18 @@ const TEMPLATES = [
     name: 'Neo-Brutalism Pop',
     desc: 'Bold 3px solid black borders, hard drop-shadows, sticker tags, retro 90s aesthetic.',
     badge: 'Trendy'
+  },
+  {
+    id: 'bento',
+    name: 'Bento Grid Modern',
+    desc: 'Apple & Linear inspired modular glass cards, dynamic asymmetric mosaic, clean & premium.',
+    badge: 'New & Hot'
+  },
+  {
+    id: 'cyberpunk',
+    name: 'Cyberpunk Neon HUD',
+    desc: 'Futuristic HUD telemetry, glowing cyan gridlines, sci-fi status tags, tech console vibe.',
+    badge: 'Futuristic'
   }
 ];
 

@@ -2,7 +2,8 @@ import React, { useEffect, useState } from 'react';
 import { portfolioApi, authApi } from '../services/api';
 import { useAuth } from '../context/AuthContext';
 import { useToast } from '../context/ToastContext';
-import { Settings, Lock, Eye, Globe, Save, Check } from 'lucide-react';
+import { Settings, Lock, Eye, EyeOff, Globe, Save, Check, AlertCircle } from 'lucide-react';
+import { validatePasswordStrength } from '../utils/url';
 
 export const SettingsPage = () => {
   const { user, refreshUser } = useAuth();
@@ -21,7 +22,13 @@ export const SettingsPage = () => {
   const [currentPassword, setCurrentPassword] = useState('');
   const [newPassword, setNewPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
+  const [showCurrentPassword, setShowCurrentPassword] = useState(false);
+  const [showNewPassword, setShowNewPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [changingPassword, setChangingPassword] = useState(false);
+  const [passError, setPassError] = useState('');
+
+  const passCheck = validatePasswordStrength(newPassword);
 
   useEffect(() => {
     const loadSettings = async () => {
@@ -76,16 +83,25 @@ export const SettingsPage = () => {
 
   const handleChangePassword = async (e) => {
     e.preventDefault();
-    if (!currentPassword || !newPassword) {
-      toast.error('Please enter your current and new password.');
+    setPassError('');
+
+    if (!currentPassword) {
+      setPassError('Current password is required.');
       return;
     }
-    if (newPassword.length < 6) {
-      toast.error('New password must be at least 6 characters.');
+    if (!newPassword) {
+      setPassError('New password is required.');
       return;
     }
+
+    const check = validatePasswordStrength(newPassword);
+    if (!check.isValid) {
+      setPassError(check.message);
+      return;
+    }
+
     if (newPassword !== confirmPassword) {
-      toast.error('New passwords do not match.');
+      setPassError('New passwords do not match.');
       return;
     }
 
@@ -96,8 +112,11 @@ export const SettingsPage = () => {
       setCurrentPassword('');
       setNewPassword('');
       setConfirmPassword('');
+      setPassError('');
     } catch (err) {
-      toast.error(err.message || 'Failed to change password.');
+      const msg = err.message || 'Failed to change password.';
+      setPassError(msg);
+      toast.error(msg);
     } finally {
       setChangingPassword(false);
     }
@@ -172,7 +191,7 @@ export const SettingsPage = () => {
           <div>
             <h3 style={{ fontSize: '1.15rem', fontWeight: 700 }}>Privacy &amp; Visibility Controls</h3>
             <p style={{ fontSize: '0.85rem', color: 'var(--text-muted)' }}>
-              Choose which sensitive contact items are exposed on your public portfolio page.
+              Choose which contact items are exposed on your public portfolio page.
             </p>
           </div>
         </div>
@@ -185,7 +204,7 @@ export const SettingsPage = () => {
             <div>
               <div style={{ fontWeight: 600, fontSize: '0.95rem' }}>Public Email Visibility</div>
               <div style={{ fontSize: '0.825rem', color: 'var(--text-muted)', marginTop: '0.15rem' }}>
-                Show mailto button and email address on public portfolio
+                Show contact button and email on public portfolio (opens Gmail compose)
               </div>
             </div>
             <div
@@ -246,49 +265,157 @@ export const SettingsPage = () => {
           <div>
             <h3 style={{ fontSize: '1.15rem', fontWeight: 700 }}>Security &amp; Password</h3>
             <p style={{ fontSize: '0.85rem', color: 'var(--text-muted)' }}>
-              Update your account password with at least 6 characters.
+              Password must have at least 8 characters, 1 uppercase letter, 1 number, and 1 special character.
             </p>
           </div>
         </div>
 
+        {passError && (
+          <div style={{
+            background: 'rgba(239, 68, 68, 0.08)',
+            border: '1px solid rgba(239, 68, 68, 0.25)',
+            borderRadius: '10px',
+            padding: '0.75rem 1rem',
+            color: '#ef4444',
+            fontSize: '0.84rem',
+            display: 'flex',
+            alignItems: 'center',
+            gap: '0.5rem',
+            marginBottom: '1.25rem'
+          }}>
+            <AlertCircle size={16} style={{ flexShrink: 0 }} />
+            <span>{passError}</span>
+          </div>
+        )}
+
         <form onSubmit={handleChangePassword} style={{ display: 'flex', flexDirection: 'column', gap: '1.15rem', maxWidth: '480px' }}>
+          {/* Current Password */}
           <div className="form-group" style={{ margin: 0 }}>
             <label className="form-label" style={{ fontWeight: 600, fontSize: '0.85rem' }}>Current Password</label>
-            <input
-              type="password"
-              className="form-control"
-              style={{ borderRadius: '12px', padding: '0.75rem 1rem' }}
-              placeholder="••••••••"
-              value={currentPassword}
-              onChange={(e) => setCurrentPassword(e.target.value)}
-              required
-            />
+            <div style={{ position: 'relative' }}>
+              <input
+                type={showCurrentPassword ? 'text' : 'password'}
+                className="form-control"
+                style={{ borderRadius: '12px', padding: '0.75rem 2.8rem 0.75rem 1rem' }}
+                placeholder="Enter current password"
+                value={currentPassword}
+                onChange={(e) => { setCurrentPassword(e.target.value); if (passError) setPassError(''); }}
+                required
+              />
+              <button
+                type="button"
+                onClick={() => setShowCurrentPassword(!showCurrentPassword)}
+                style={{
+                  position: 'absolute',
+                  right: '12px',
+                  top: '50%',
+                  transform: 'translateY(-50%)',
+                  background: 'transparent',
+                  border: 'none',
+                  color: 'var(--text-muted)',
+                  cursor: 'pointer',
+                  padding: '4px',
+                  display: 'flex',
+                  alignItems: 'center'
+                }}
+              >
+                {showCurrentPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+              </button>
+            </div>
           </div>
 
+          {/* New Password */}
           <div className="form-group" style={{ margin: 0 }}>
-            <label className="form-label" style={{ fontWeight: 600, fontSize: '0.85rem' }}>New Password (min. 6 characters)</label>
-            <input
-              type="password"
-              className="form-control"
-              style={{ borderRadius: '12px', padding: '0.75rem 1rem' }}
-              placeholder="••••••••"
-              value={newPassword}
-              onChange={(e) => setNewPassword(e.target.value)}
-              required
-            />
+            <label className="form-label" style={{ fontWeight: 600, fontSize: '0.85rem' }}>New Password</label>
+            <div style={{ position: 'relative' }}>
+              <input
+                type={showNewPassword ? 'text' : 'password'}
+                className="form-control"
+                style={{ borderRadius: '12px', padding: '0.75rem 2.8rem 0.75rem 1rem' }}
+                placeholder="Enter new password (min. 8 characters)"
+                value={newPassword}
+                onChange={(e) => { setNewPassword(e.target.value); if (passError) setPassError(''); }}
+                required
+              />
+              <button
+                type="button"
+                onClick={() => setShowNewPassword(!showNewPassword)}
+                style={{
+                  position: 'absolute',
+                  right: '12px',
+                  top: '50%',
+                  transform: 'translateY(-50%)',
+                  background: 'transparent',
+                  border: 'none',
+                  color: 'var(--text-muted)',
+                  cursor: 'pointer',
+                  padding: '4px',
+                  display: 'flex',
+                  alignItems: 'center'
+                }}
+              >
+                {showNewPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+              </button>
+            </div>
+
+            {/* Checklist */}
+            {newPassword && (
+              <div className="password-requirements-box" style={{ marginTop: '0.5rem' }}>
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '0.35rem' }}>
+                  <div className={`password-req-item ${passCheck.rules.length ? 'met' : ''}`}>
+                    {passCheck.rules.length ? <Check size={12} /> : <span>•</span>}
+                    <span>Min 8 characters</span>
+                  </div>
+                  <div className={`password-req-item ${passCheck.rules.uppercase ? 'met' : ''}`}>
+                    {passCheck.rules.uppercase ? <Check size={12} /> : <span>•</span>}
+                    <span>1 uppercase</span>
+                  </div>
+                  <div className={`password-req-item ${passCheck.rules.number ? 'met' : ''}`}>
+                    {passCheck.rules.number ? <Check size={12} /> : <span>•</span>}
+                    <span>1 number</span>
+                  </div>
+                  <div className={`password-req-item ${passCheck.rules.special ? 'met' : ''}`}>
+                    {passCheck.rules.special ? <Check size={12} /> : <span>•</span>}
+                    <span>1 special char</span>
+                  </div>
+                </div>
+              </div>
+            )}
           </div>
 
+          {/* Confirm Password */}
           <div className="form-group" style={{ margin: 0 }}>
             <label className="form-label" style={{ fontWeight: 600, fontSize: '0.85rem' }}>Confirm New Password</label>
-            <input
-              type="password"
-              className="form-control"
-              style={{ borderRadius: '12px', padding: '0.75rem 1rem' }}
-              placeholder="••••••••"
-              value={confirmPassword}
-              onChange={(e) => setConfirmPassword(e.target.value)}
-              required
-            />
+            <div style={{ position: 'relative' }}>
+              <input
+                type={showConfirmPassword ? 'text' : 'password'}
+                className="form-control"
+                style={{ borderRadius: '12px', padding: '0.75rem 2.8rem 0.75rem 1rem' }}
+                placeholder="Re-enter new password"
+                value={confirmPassword}
+                onChange={(e) => { setConfirmPassword(e.target.value); if (passError) setPassError(''); }}
+                required
+              />
+              <button
+                type="button"
+                onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                style={{
+                  position: 'absolute',
+                  right: '12px',
+                  top: '50%',
+                  transform: 'translateY(-50%)',
+                  background: 'transparent',
+                  border: 'none',
+                  color: 'var(--text-muted)',
+                  cursor: 'pointer',
+                  padding: '4px',
+                  display: 'flex',
+                  alignItems: 'center'
+                }}
+              >
+                {showConfirmPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+              </button>
+            </div>
           </div>
 
           <button
@@ -304,3 +431,4 @@ export const SettingsPage = () => {
     </div>
   );
 };
+export default SettingsPage;
