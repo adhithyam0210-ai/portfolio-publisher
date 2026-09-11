@@ -165,7 +165,7 @@ export const DashboardPage = ({ onNavigate }) => {
             </span>
           </div>
           <p style={{ color: 'var(--text-secondary)', fontSize: '0.98rem' }}>
-            Manage your personal online portfolio, track profile completion, and share your live portfolio link.
+            Manage your personal online app, track profile completion, and share your live portfolio link.
           </p>
         </div>
 
